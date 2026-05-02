@@ -214,10 +214,10 @@ reference image. OpenD4RT uses this repository's evaluation results, with
     <tr><td><b>TraceAnything</b> (2025)</td><td align="right">71.33</td><td align="right">0.2727</td><td align="right">39.83</td><td align="right">1.0593</td><td align="right">60.63</td><td align="right">0.5758</td><td align="right">75.65</td><td align="right">0.2511</td></tr>
     <tr><td><b>Any4D</b> (2025)</td><td align="right">60.03</td><td align="right">0.3344</td><td align="right">60.86</td><td align="right">0.4194</td><td align="right">68.39</td><td align="right">0.3012</td><td align="right">56.71</td><td align="right">0.4320</td></tr>
     <tr><td><b>V-DPM</b> (2026)</td><td align="right">76.36</td><td align="right">0.1957</td><td align="right">79.79</td><td align="right">0.1994</td><td align="right">76.38</td><td align="right">0.2378</td><td align="right">66.06</td><td align="right">0.3426</td></tr>
-    <tr style="background-color:#dff7e8; border-top:3px solid #1f9d55; border-bottom:3px solid #1f9d55;">
-      <td style="border-left:5px solid #1f9d55;"><b><u>OpenD4RT_32CLIP_9Dataset_NoAUG</u></b></td>
-      <td align="right" style="background-color:#92efad; color:#063b16;"><b>78.63</b></td>
-      <td align="right" style="background-color:#92efad; color:#063b16;"><b>0.1811</b></td>
+    <tr>
+      <td><b>OpenD4RT_32CLIP_9Dataset_NoAUG</b><br><img src="https://img.shields.io/badge/our_model-PStudio_best-brightgreen" alt="PStudio best"></td>
+      <td align="right"><b>78.63</b><br><sub>best APD</sub></td>
+      <td align="right"><b>0.1811</b><br><sub>best EPE</sub></td>
       <td align="right"><b>66.03</b></td><td align="right"><b>0.3397</b></td>
       <td align="right"><b>72.66</b></td><td align="right"><b>0.2944</b></td>
       <td align="right"><b>69.93</b></td><td align="right"><b>0.2964</b></td>
@@ -225,7 +225,8 @@ reference image. OpenD4RT uses this repository's evaluation results, with
   </tbody>
 </table>
 
-The green highlight marks OpenD4RT's strong PStudio result in this comparison.
+The GitHub badge and `best` labels mark OpenD4RT's strongest PStudio result in
+this comparison.
 
 ## 👁️ Viser Demo Visualization
 
