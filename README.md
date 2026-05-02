@@ -32,35 +32,23 @@ same model interface.
 See [docs/D4RT_paper.pdf](docs/D4RT_paper.pdf) for the local paper PDF
 included in this repository.
 
-## Repository Layout
-
-```text
-OpenD4RT/
-  checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/
-    opend4rt.ckpt        # downloaded from Hugging Face
-    model.yaml
-  eval_track3d_in_worldtrack.py
-  infer_track_3d.py
-  run_eval_worldtrack.sh
-  run_build_worldtrack_demo.sh
-  src/
-  vis/
-  docs/image.png
-```
-
 ## Checkpoint Zoo
 
-| Name | Training data | Augmentation | Input length | Status | Checkpoint path | Hugging Face |
-| --- | --- | --- | --- | --- | --- | --- |
-| OpenD4RT_32CLIP_9Dataset_NoAUG | 9-dataset mixture | No color/crop augmentation | 32 frames | Released | `checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/opend4rt.ckpt` | [ckpt](https://huggingface.co/Lijiaxin0111/OpenD4RT/blob/main/checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/opend4rt.ckpt) / [config](https://huggingface.co/Lijiaxin0111/OpenD4RT/blob/main/checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/model.yaml) |
-| OpenD4RT-9Mix-NoCropAug-Clip48 | 9-dataset mixture | No crop augmentation | 48 frames | Coming | TBD |  |
-| OpenD4RT-9Mix-Aug-Clip48 | 9-dataset mixture | With data augmentation | 48 frames | Coming | TBD |  |
-| OpenD4RT-10Mix-SynthVerse-NoAug-Clip32 | 10-dataset mixture | No data augmentation | 32 frames | Coming | TBD |  |
-| OpenD4RT-10Mix-SynthVerse-Aug-Clip48 | 10-dataset mixture | With data augmentation | 48 frames | Coming | TBD |  |
+| Variant | Data | Aug. | Frames | Status | Download |
+| --- | --- | --- | ---: | --- | --- |
+| `32CLIP_9Dataset_NoAUG` | 9Mix | No color/crop | 32 | Released | [HF](https://huggingface.co/Lijiaxin0111/OpenD4RT/tree/main/checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG) |
+| `48CLIP_9Mix_NoCropAUG` | 9Mix | No crop | 48 | Coming | TBD |
+| `48CLIP_9Mix_AUG` | 9Mix | Yes | 48 | Coming | TBD |
+| `32CLIP_10Mix_SynthVerse_NoAUG` | 10Mix | No | 32 | Coming | TBD |
+| `48CLIP_10Mix_SynthVerse_AUG` | 10Mix | Yes | 48 | Coming | TBD |
 
-Tip: the 9-dataset mixture uses PointOdyssey, Dynamic Replica, Kubric Full,
+Released checkpoint local path:
+`checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/opend4rt.ckpt`.
+
+Tip: all rows are OpenD4RT variants. The 9Mix setting uses PointOdyssey,
+Dynamic Replica, Kubric Full,
 TartanAir, Virtual KITTI 2, ScanNet, BlendedMVS, CO3D, and MVS-Synth. The
-10-dataset mixture additionally includes SynthVerse.
+10Mix setting additionally includes SynthVerse.
 
 ## Checkpoint Download
 
@@ -164,7 +152,7 @@ SUBSETS=adt_mini LIMIT_SEQS=1 NUM_FRAMES=24 bash run_eval_worldtrack.sh
 
 ## Results
 
-```
+OpenD4RT_32CLIP_9Dataset_NoAUG detailed WorldTrack results:
 
 | Subset | APD global | EPE global | APD global dyn | EPE global dyn | Queries |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -173,19 +161,61 @@ SUBSETS=adt_mini LIMIT_SEQS=1 NUM_FRAMES=24 bash run_eval_worldtrack.sh
 | `pstudio_mini` | 0.8253 | 0.1560 | 0.8259 | 0.1572 | 8720 |
 | `ds_mini` | 0.7247 | 0.2980 | 0.7622 | 0.2647 | 52462 |
 
+## Model Results
+
+Sparse point tracking comparison on WorldTrack-style subsets. Each cell reports
+`APD / EPE`; APD is shown as a percentage, higher APD is better, and lower EPE
+is better. Recent baseline numbers are transcribed from the sparse point
+tracking table in the provided reference image. OpenD4RT uses this repository's
+evaluation results, with `ds_mini` reported in the DR/DS column.
+
+| Model | PO | DR/DS | ADT | PStudio |
+| --- | ---: | ---: | ---: | ---: |
+| SpaTrackerV2 (2025) | 69.57 / 0.3780 | 73.43 / 0.2732 | 92.22 / 0.0915 | 74.16 / 0.2272 |
+| St4RTrack (2025) | 67.95 / 0.3140 | 73.74 / 0.2682 | 76.01 / 0.2680 | 69.67 / 0.2637 |
+| TraceAnything (2025) | 39.83 / 1.0593 | 60.63 / 0.5758 | 75.65 / 0.2511 | 71.33 / 0.2727 |
+| Any4D (2025) | 60.86 / 0.4194 | 68.39 / 0.3012 | 56.71 / 0.4320 | 60.03 / 0.3344 |
+| V-DPM (2026) | 79.79 / 0.1994 | 76.38 / 0.2378 | 66.06 / 0.3426 | 76.36 / 0.1957 |
+| **OpenD4RT_32CLIP_9Dataset_NoAUG** | 69.12 / 0.3186 | 72.47 / 0.2980 | 74.34 / <mark>0.2477</mark> | <mark>82.53 / 0.1560</mark> |
+
+Highlighted cells indicate competitive OpenD4RT results among the recent
+2025/2026 baselines in this comparison.
+
 ## Viser Demo Visualization
 
-Build a Viser demo data package for one WorldTrack `.npz` case:
+The demo script defaults to high-scoring WorldTrack cases selected from
+`tmp/eval_worldtrack`, rather than an arbitrary first `.npz`. The ranking
+prioritizes high APD, low EPE, and enough dynamic tracks for meaningful
+visualization.
+
+| Rank | Case | Subset | APD | EPE | Dyn. APD | Dyn. ratio |
+| ---: | --- | --- | ---: | ---: | ---: | ---: |
+| 1 | `juggle_5` | `pstudio_mini` | 0.9938 | 0.0555 | 0.9938 | 1.000 |
+| 2 | `fec654-3_obj_source_left_1` | `ds_mini` | 0.9248 | 0.0919 | 0.9587 | 0.578 |
+| 3 | `Apartment_release_meal_seq133_1` | `adt_mini` | 0.8783 | 0.1571 | 0.9960 | 0.810 |
+| 4 | `cab_e_3rd_12` | `po_mini` | 0.8419 | 0.1677 | 0.8868 | 0.935 |
+
+Build the default rank-1 Viser demo package:
 
 ```bash
-WORLDTRACK_NPZ=$(find data/worldtrack_release/adt_mini -name '*.npz' | head -n 1)
-WORLDTRACK_NPZ="$WORLDTRACK_NPZ" OUTPUT_DIR=tmp/worldtrack_demo bash run_build_worldtrack_demo.sh
+OUTPUT_DIR=tmp/worldtrack_demo bash run_build_worldtrack_demo.sh
+```
+
+Build another recommended case by rank:
+
+```bash
+DEMO_CASE_RANK=2 OUTPUT_DIR=tmp/worldtrack_demo_ds bash run_build_worldtrack_demo.sh
+```
+
+Or provide an explicit case:
+
+```bash
+DEMO_CASE=pstudio_mini/juggle_5.npz OUTPUT_DIR=tmp/worldtrack_demo bash run_build_worldtrack_demo.sh
 ```
 
 For a lighter/faster package, reduce the point and track counts:
 
 ```bash
-WORLDTRACK_NPZ="$WORLDTRACK_NPZ" \
 OUTPUT_DIR=tmp/worldtrack_demo_small \
 POINT_GRID_COLS=32 POINT_GRID_ROWS=32 POINT_MAX_POINTS=1024 TRACK_MAX_POINTS=96 \
 bash run_build_worldtrack_demo.sh
