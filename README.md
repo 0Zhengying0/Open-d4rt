@@ -46,6 +46,25 @@ same model interface.
 See [docs/D4RT_paper.pdf](docs/D4RT_paper.pdf) for the local paper PDF
 included in this repository.
 
+## 🔧 Installation
+
+Create the conda environment:
+
+```bash
+conda env create -f environment.yml
+conda activate d4rt
+```
+
+Or install into an existing Python environment:
+
+```bash
+pip install -r requirements.txt
+```
+
+The visualization package builder calls the `ffmpeg` command-line tool to
+write MP4 assets for Viser. The conda environment includes `ffmpeg`; if you use
+`pip install -r requirements.txt`, install `ffmpeg` separately if needed.
+
 ## 📦 Checkpoint Zoo
 
 | Variant | Data | Aug. | Frames | Status | Download |
@@ -87,25 +106,6 @@ checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/
   opend4rt.ckpt
   model.yaml
 ```
-
-## 🔧 Installation
-
-Create the conda environment:
-
-```bash
-conda env create -f environment.yml
-conda activate d4rt
-```
-
-Or install into an existing Python environment:
-
-```bash
-pip install -r requirements.txt
-```
-
-The visualization package builder calls the `ffmpeg` command-line tool to
-write MP4 assets for Viser. The conda environment includes `ffmpeg`; if you use
-`pip install -r requirements.txt`, install `ffmpeg` separately if needed.
 
 ## 🌍 WorldTrack Data
 
