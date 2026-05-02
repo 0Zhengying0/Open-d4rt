@@ -39,8 +39,6 @@ tools, with complete training and evaluation code planned for release.
 
 - [2026/05/02] Released the OpenD4RT WorldTrack evaluation pipeline, Viser
   visualization tools, and the first Hugging Face checkpoint.
-- [2026/05/02] Added 3D track GIF export for RGB, ground-truth tracks, and
-  OpenD4RT prediction comparisons.
 
 ## 🧠 What is D4RT?
 
@@ -225,8 +223,15 @@ reference image. OpenD4RT uses this repository's evaluation results, with
   </tbody>
 </table>
 
-The GitHub badge and `best` labels mark OpenD4RT's strongest PStudio result in
-this comparison.
+Tip: OpenD4RT has the strongest PStudio result in this comparison.
+
+## 🎬 Result Gallery
+
+| Case / Motion | RGB + 2D Tracking | GT vs Pred 3D Tracks |
+| --- | --- | --- |
+| `softball_25`<br>Softball swing and fast ball motion | <img src="demo/softball_25_rgb_gt_pred_2d.gif" width="360" alt="Softball RGB video with GT and OpenD4RT 2D tracking overlay"> | <img src="demo/softball_25_gt_pred_3d.gif" width="360" alt="Softball GT and OpenD4RT 3D track comparison"> |
+| `football_16`<br>Football play with player and ball motion | <img src="demo/football_16_rgb_gt_pred_2d.gif" width="360" alt="Football RGB video with GT and OpenD4RT 2D tracking overlay"> | <img src="demo/football_16_gt_pred_3d.gif" width="360" alt="Football GT and OpenD4RT 3D track comparison"> |
+| `basketball_3`<br>Basketball play with body and ball motion | <img src="demo/basketball_3_rgb_gt_pred_2d.gif" width="360" alt="Basketball RGB video with GT and OpenD4RT 2D tracking overlay"> | <img src="demo/basketball_3_gt_pred_3d.gif" width="360" alt="Basketball GT and OpenD4RT 3D track comparison"> |
 
 ## 👁️ Viser Demo Visualization
 
