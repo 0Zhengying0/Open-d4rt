@@ -2,6 +2,9 @@
   <h1>OpenD4RT</h1>
   <h3>An unofficial PyTorch/GPU implementation of D4RT for 4D reconstruction and tracking</h3>
   <p>
+    <strong>RHOS Team</strong> · <a href="https://mvig-rhos.com/" target="_blank">https://mvig-rhos.com/</a>
+  </p>
+  <p>
     <a href="https://d4rt-paper.github.io/" target="_blank">
       <img src="https://img.shields.io/badge/%F0%9F%8C%90-D4RT%20Project-2f80ed" alt="D4RT project page">
     </a>
@@ -270,21 +273,6 @@ by the original D4RT authors. The code in this repository is released under the
 Apache 2.0 license; see [LICENSE](LICENSE). The D4RT paper, project page,
 datasets, third-party assets, and upstream dependencies remain under their
 respective licenses and terms.
-
-## ✏️ Citation
-
-If OpenD4RT is useful for your research, please cite the original D4RT paper:
-
-```bibtex
-@article{zhang2025d4rt,
-  title={Efficiently Reconstructing Dynamic Scenes One D4RT at a Time},
-  author={Zhang, Chuhan and Le Moing, Guillaume and Koppula, Skanda and Rocco, Ignacio and Momeni, Liliane and Xie, Junyu and Sun, Shuyang and Sukthankar, Rahul and Barral, Jo{\"e}lle K. and Hadsell, Raia and Ghahramani, Zoubin and Zisserman, Andrew and Zhang, Junlin and Sajjadi, Mehdi S. M.},
-  journal={arXiv preprint},
-  year={2025}
-}
-```
-
-Official D4RT project page: <https://d4rt-paper.github.io/>.
 
 ## 🙏 Acknowledgements
 
