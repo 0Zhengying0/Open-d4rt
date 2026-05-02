@@ -196,10 +196,10 @@ reference image. OpenD4RT uses this repository's evaluation results, with
   <thead>
     <tr>
       <th rowspan="2" align="left">Model</th>
+      <th colspan="2" align="center">PStudio</th>
       <th colspan="2" align="center">PO</th>
       <th colspan="2" align="center">DR</th>
       <th colspan="2" align="center">ADT</th>
-      <th colspan="2" align="center">PStudio</th>
     </tr>
     <tr>
       <th align="right">APD&nbsp;↑</th><th align="right">EPE&nbsp;↓</th>
@@ -209,18 +209,18 @@ reference image. OpenD4RT uses this repository's evaluation results, with
     </tr>
   </thead>
   <tbody>
-    <tr><td><b>SpaTrackerV2</b> (2025)</td><td align="right">69.57</td><td align="right">0.3780</td><td align="right">73.43</td><td align="right">0.2732</td><td align="right">92.22</td><td align="right">0.0915</td><td align="right">74.16</td><td align="right">0.2272</td></tr>
-    <tr><td><b>St4RTrack</b> (2025)</td><td align="right">67.95</td><td align="right">0.3140</td><td align="right">73.74</td><td align="right">0.2682</td><td align="right">76.01</td><td align="right">0.2680</td><td align="right">69.67</td><td align="right">0.2637</td></tr>
-    <tr><td><b>TraceAnything</b> (2025)</td><td align="right">39.83</td><td align="right">1.0593</td><td align="right">60.63</td><td align="right">0.5758</td><td align="right">75.65</td><td align="right">0.2511</td><td align="right">71.33</td><td align="right">0.2727</td></tr>
-    <tr><td><b>Any4D</b> (2025)</td><td align="right">60.86</td><td align="right">0.4194</td><td align="right">68.39</td><td align="right">0.3012</td><td align="right">56.71</td><td align="right">0.4320</td><td align="right">60.03</td><td align="right">0.3344</td></tr>
-    <tr><td><b>V-DPM</b> (2026)</td><td align="right">79.79</td><td align="right">0.1994</td><td align="right">76.38</td><td align="right">0.2378</td><td align="right">66.06</td><td align="right">0.3426</td><td align="right">76.36</td><td align="right">0.1957</td></tr>
-    <tr style="background-color:#e8f8ee;">
-      <td><b>OpenD4RT_32CLIP_9Dataset_NoAUG</b></td>
+    <tr><td><b>SpaTrackerV2</b> (2025)</td><td align="right">74.16</td><td align="right">0.2272</td><td align="right">69.57</td><td align="right">0.3780</td><td align="right">73.43</td><td align="right">0.2732</td><td align="right">92.22</td><td align="right">0.0915</td></tr>
+    <tr><td><b>St4RTrack</b> (2025)</td><td align="right">69.67</td><td align="right">0.2637</td><td align="right">67.95</td><td align="right">0.3140</td><td align="right">73.74</td><td align="right">0.2682</td><td align="right">76.01</td><td align="right">0.2680</td></tr>
+    <tr><td><b>TraceAnything</b> (2025)</td><td align="right">71.33</td><td align="right">0.2727</td><td align="right">39.83</td><td align="right">1.0593</td><td align="right">60.63</td><td align="right">0.5758</td><td align="right">75.65</td><td align="right">0.2511</td></tr>
+    <tr><td><b>Any4D</b> (2025)</td><td align="right">60.03</td><td align="right">0.3344</td><td align="right">60.86</td><td align="right">0.4194</td><td align="right">68.39</td><td align="right">0.3012</td><td align="right">56.71</td><td align="right">0.4320</td></tr>
+    <tr><td><b>V-DPM</b> (2026)</td><td align="right">76.36</td><td align="right">0.1957</td><td align="right">79.79</td><td align="right">0.1994</td><td align="right">76.38</td><td align="right">0.2378</td><td align="right">66.06</td><td align="right">0.3426</td></tr>
+    <tr style="background-color:#dff7e8; border-top:3px solid #1f9d55; border-bottom:3px solid #1f9d55;">
+      <td style="border-left:5px solid #1f9d55;"><b><u>OpenD4RT_32CLIP_9Dataset_NoAUG</u></b></td>
+      <td align="right" style="background-color:#92efad; color:#063b16;"><b>78.63</b></td>
+      <td align="right" style="background-color:#92efad; color:#063b16;"><b>0.1811</b></td>
       <td align="right"><b>66.03</b></td><td align="right"><b>0.3397</b></td>
       <td align="right"><b>72.66</b></td><td align="right"><b>0.2944</b></td>
       <td align="right"><b>69.93</b></td><td align="right"><b>0.2964</b></td>
-      <td align="right" style="background-color:#b7f7c6; color:#063b16;"><b>78.63</b></td>
-      <td align="right" style="background-color:#b7f7c6; color:#063b16;"><b>0.1811</b></td>
     </tr>
   </tbody>
 </table>
@@ -240,13 +240,6 @@ Open a demo package with Viser:
 
 ```bash
 python vis/serve_demo_viser.py --root tmp/worldtrack_demo_juggle --port 8081
-```
-
-Open the printed Viser URL in a browser. Use another root or port to inspect
-the second case:
-
-```bash
-python vis/serve_demo_viser.py --root tmp/worldtrack_demo_softball --port 8082
 ```
 
 For a lighter/faster package:
