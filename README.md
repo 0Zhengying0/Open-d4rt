@@ -1,11 +1,27 @@
 <div align="center">
   <h1>OpenD4RT</h1>
-  <p><b>An unofficial PyTorch/GPU implementation of D4RT for 4D reconstruction and tracking</b></p>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"></a>
-  <a href="docs/D4RT_paper.pdf"><img src="https://img.shields.io/badge/report-D4RT%20PDF-lightgrey.svg" alt="D4RT paper"></a>
-  <img src="https://img.shields.io/badge/python-3.10-blue.svg" alt="Python">
-  <img src="https://img.shields.io/badge/PyTorch-2.6-red.svg" alt="PyTorch">
-  <img src="https://img.shields.io/badge/task-WorldTrack%203D%20Tracking-green.svg" alt="WorldTrack">
+  <h3>An unofficial PyTorch/GPU implementation of D4RT for 4D reconstruction and tracking</h3>
+  <p>
+    <a href="https://d4rt-paper.github.io/" target="_blank">
+      <img src="https://img.shields.io/badge/%F0%9F%8C%90-D4RT%20Project-2f80ed" alt="D4RT project page">
+    </a>
+    <a href="docs/D4RT_paper.pdf">
+      <img src="https://img.shields.io/badge/%F0%9F%93%84-Paper%20PDF-lightgrey" alt="D4RT paper PDF">
+    </a>
+    <a href="https://huggingface.co/Lijiaxin0111/OpenD4RT/tree/main/checkpoints" target="_blank">
+      <img src="https://img.shields.io/badge/%F0%9F%A4%97-Checkpoints-yellow" alt="Hugging Face checkpoints">
+    </a>
+    <a href="LICENSE">
+      <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
+    </a>
+  </p>
+  <p>
+    <img src="https://img.shields.io/badge/python-3.10-blue.svg" alt="Python">
+    <img src="https://img.shields.io/badge/PyTorch-2.6-red.svg" alt="PyTorch">
+    <img src="https://img.shields.io/badge/CUDA-12.4-76B900.svg" alt="CUDA">
+    <img src="https://img.shields.io/badge/task-WorldTrack%203D%20Tracking-green.svg" alt="WorldTrack">
+  </p>
+  <p><strong>OpenD4RT reproduces D4RT-style 4D reconstruction and tracking with released WorldTrack evaluation, visualization tools, and Hugging Face checkpoints.</strong></p>
 </div>
 
 OpenD4RT is an unofficial open-source PyTorch/GPU implementation of D4RT,
@@ -252,67 +268,6 @@ python vis/serve_demo_viser.py --root tmp/worldtrack_demo_adt_meal --port 8082
 
 The generated demo package contains `assets/demo_data.json`,
 `assets/input_video.mp4`, rendered diagnostic videos, and `manifest.json`.
-
-## 3D Track GIF Export
-
-For README-friendly qualitative comparison, export 3D trajectory GIFs for the
-ground-truth tracks and OpenD4RT predictions. The GIF script defaults to
-64-frame clips and writes results under `tmp/vis_gif/<case_name>/`.
-
-Build GIFs for the default complex-motion case:
-
-```bash
-bash run_build_worldtrack_gifs.sh
-```
-
-Build GIFs for a specific WorldTrack case:
-
-```bash
-DEMO_CASE=pstudio_mini/softball_25.npz bash run_build_worldtrack_gifs.sh
-```
-
-Build GIFs for the recommended complex-motion cases by rank:
-
-```bash
-GIF_CASE_RANK=1 bash run_build_worldtrack_gifs.sh  # juggle_5
-GIF_CASE_RANK=2 bash run_build_worldtrack_gifs.sh  # softball_25
-GIF_CASE_RANK=3 bash run_build_worldtrack_gifs.sh  # tennis_5
-GIF_CASE_RANK=4 bash run_build_worldtrack_gifs.sh  # football_16
-```
-
-Each run produces:
-
-```text
-tmp/vis_gif/<case_name>/
-  rgb.gif
-  gt_3d.gif
-  pred_3d.gif
-  gt_pred_3d.gif
-  rgb_gt_pred_3d.gif
-  manifest.json
-```
-
-If a Viser demo package has already been generated, GIFs can be exported from
-that package without re-running model inference:
-
-```bash
-python vis/build_worldtrack_track_gifs.py \
-  --demo-root tmp/worldtrack_demo \
-  --output-dir tmp/vis_gif/juggle_5
-```
-
-Example README display snippet:
-
-```html
-<p align="center">
-  <img src="docs/gifs/juggle_5_rgb.gif" width="31%" alt="RGB video">
-  <img src="docs/gifs/juggle_5_gt_3d.gif" width="31%" alt="GT 3D tracks">
-  <img src="docs/gifs/juggle_5_pred_3d.gif" width="31%" alt="OpenD4RT 3D tracks">
-</p>
-```
-
-For a compact single asset, use `rgb_gt_pred_3d.gif`, which places the RGB
-frames, GT 3D tracks, and predicted 3D tracks side by side.
 
 ## ToDo
 
