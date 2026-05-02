@@ -213,7 +213,7 @@ reference image. OpenD4RT uses this repository's evaluation results, with
     <tr><td><b>Any4D</b> (2025)</td><td align="right">60.03</td><td align="right">0.3344</td><td align="right">60.86</td><td align="right">0.4194</td><td align="right">68.39</td><td align="right">0.3012</td><td align="right">56.71</td><td align="right">0.4320</td></tr>
     <tr><td><b>V-DPM</b> (2026)</td><td align="right">76.36</td><td align="right">0.1957</td><td align="right">79.79</td><td align="right">0.1994</td><td align="right">76.38</td><td align="right">0.2378</td><td align="right">66.06</td><td align="right">0.3426</td></tr>
     <tr>
-      <td><b>OpenD4RT_32CLIP_9Dataset_NoAUG</b></td>
+      <td><b>OpenD4RT (Ours) </b></td>
       <td align="right"><b>78.63</b></td>
       <td align="right"><b>0.1811</b></td>
       <td align="right"><b>66.03</b></td><td align="right"><b>0.3397</b></td>
