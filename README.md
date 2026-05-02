@@ -116,7 +116,7 @@ data/worldtrack_release/
 Run a quick smoke test on one `adt_mini` sequence:
 
 ```bash
-LIMIT_SEQS=1 SUBSETS=adt_mini NUM_FRAMES=24 OUTPUT_DIR=tmp/eval_smoke bash run_eval_worldtrack.sh
+LIMIT_SEQS=1 SUBSETS=adt_mini OUTPUT_DIR=tmp/eval_smoke bash run_eval_worldtrack.sh
 ```
 
 Run the full WorldTrack evaluation:
@@ -135,7 +135,7 @@ python eval_track3d_in_worldtrack.py \
   --ckpt-path "$EXP/opend4rt.ckpt" \
   --data-root data/worldtrack_release \
   --subsets adt_mini,po_mini,pstudio_mini,ds_mini \
-  --num-frames 24 \
+  --num-frames 64 \
   --query-chunk-size 4096 \
   --output-dir tmp/eval_worldtrack \
   --device cuda \
@@ -147,7 +147,7 @@ Useful overrides:
 ```bash
 QUERY_CHUNK_SIZE=1024 bash run_eval_worldtrack.sh
 CUDA_VISIBLE_DEVICES=1 DEVICE=cuda bash run_eval_worldtrack.sh
-SUBSETS=adt_mini LIMIT_SEQS=1 NUM_FRAMES=24 bash run_eval_worldtrack.sh
+SUBSETS=adt_mini LIMIT_SEQS=1 NUM_FRAMES=64 bash run_eval_worldtrack.sh
 ```
 
 ## Results
@@ -156,10 +156,10 @@ OpenD4RT_32CLIP_9Dataset_NoAUG detailed WorldTrack results:
 
 | Subset | APD global | EPE global | APD global dyn | EPE global dyn | Queries |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `adt_mini` | 0.7434 | 0.2477 | 0.8345 | 0.2251 | 22187 |
-| `po_mini` | 0.6912 | 0.3186 | 0.7819 | 0.2544 | 53468 |
-| `pstudio_mini` | 0.8253 | 0.1560 | 0.8259 | 0.1572 | 8720 |
-| `ds_mini` | 0.7247 | 0.2980 | 0.7622 | 0.2647 | 52462 |
+| `adt_mini` | 0.6993 | 0.2964 | 0.6975 | 0.3628 | 22187 |
+| `po_mini` | 0.6603 | 0.3397 | 0.7333 | 0.2722 | 53468 |
+| `pstudio_mini` | 0.7863 | 0.1811 | 0.7863 | 0.1811 | 8720 |
+| `ds_mini` | 0.7266 | 0.2944 | 0.7521 | 0.2699 | 52462 |
 
 ## Model Results
 
@@ -176,7 +176,7 @@ evaluation results, with `ds_mini` reported in the DR/DS column.
 | TraceAnything (2025) | 39.83 / 1.0593 | 60.63 / 0.5758 | 75.65 / 0.2511 | 71.33 / 0.2727 |
 | Any4D (2025) | 60.86 / 0.4194 | 68.39 / 0.3012 | 56.71 / 0.4320 | 60.03 / 0.3344 |
 | V-DPM (2026) | 79.79 / 0.1994 | 76.38 / 0.2378 | 66.06 / 0.3426 | 76.36 / 0.1957 |
-| **OpenD4RT_32CLIP_9Dataset_NoAUG** | 69.12 / 0.3186 | 72.47 / 0.2980 | 74.34 / <mark>0.2477</mark> | <mark>82.53 / 0.1560</mark> |
+| **OpenD4RT_32CLIP_9Dataset_NoAUG** | 66.03 / 0.3397 | 72.66 / 0.2944 | 69.93 / 0.2964 | <mark>78.63 / 0.1811</mark> |
 
 Highlighted cells indicate competitive OpenD4RT results among the recent
 2025/2026 baselines in this comparison.
@@ -195,7 +195,8 @@ visualization.
 | 3 | `Apartment_release_meal_seq133_1` | `adt_mini` | 0.8783 | 0.1571 | 0.9960 | 0.810 |
 | 4 | `cab_e_3rd_12` | `po_mini` | 0.8419 | 0.1677 | 0.8868 | 0.935 |
 
-Build the default rank-1 Viser demo package:
+Build the default rank-1 Viser demo package. By default, the package uses the
+first 64 frames to match the evaluation setting:
 
 ```bash
 OUTPUT_DIR=tmp/worldtrack_demo bash run_build_worldtrack_demo.sh
@@ -213,6 +214,15 @@ Or provide an explicit case:
 DEMO_CASE=pstudio_mini/juggle_5.npz OUTPUT_DIR=tmp/worldtrack_demo bash run_build_worldtrack_demo.sh
 ```
 
+Build all recommended cases into separate folders:
+
+```bash
+DEMO_CASE_RANK=1 OUTPUT_DIR=tmp/worldtrack_demo_pstudio_juggle bash run_build_worldtrack_demo.sh
+DEMO_CASE_RANK=2 OUTPUT_DIR=tmp/worldtrack_demo_ds_fec654 bash run_build_worldtrack_demo.sh
+DEMO_CASE_RANK=3 OUTPUT_DIR=tmp/worldtrack_demo_adt_meal bash run_build_worldtrack_demo.sh
+DEMO_CASE_RANK=4 OUTPUT_DIR=tmp/worldtrack_demo_po_cab bash run_build_worldtrack_demo.sh
+```
+
 For a lighter/faster package, reduce the point and track counts:
 
 ```bash
@@ -227,8 +237,82 @@ Start the interactive Viser viewer:
 python vis/serve_demo_viser.py --root tmp/worldtrack_demo --port 8081
 ```
 
+Open the printed Viser URL in a browser. To inspect another generated case,
+change `--root` to that package directory:
+
+```bash
+python vis/serve_demo_viser.py --root tmp/worldtrack_demo_ds_fec654 --port 8081
+```
+
+If a Viser server is already running, either stop it or use a different port:
+
+```bash
+python vis/serve_demo_viser.py --root tmp/worldtrack_demo_adt_meal --port 8082
+```
+
 The generated demo package contains `assets/demo_data.json`,
 `assets/input_video.mp4`, rendered diagnostic videos, and `manifest.json`.
+
+## 3D Track GIF Export
+
+For README-friendly qualitative comparison, export 3D trajectory GIFs for the
+ground-truth tracks and OpenD4RT predictions. The GIF script defaults to
+64-frame clips and writes results under `tmp/vis_gif/<case_name>/`.
+
+Build GIFs for the default complex-motion case:
+
+```bash
+bash run_build_worldtrack_gifs.sh
+```
+
+Build GIFs for a specific WorldTrack case:
+
+```bash
+DEMO_CASE=pstudio_mini/softball_25.npz bash run_build_worldtrack_gifs.sh
+```
+
+Build GIFs for the recommended complex-motion cases by rank:
+
+```bash
+GIF_CASE_RANK=1 bash run_build_worldtrack_gifs.sh  # juggle_5
+GIF_CASE_RANK=2 bash run_build_worldtrack_gifs.sh  # softball_25
+GIF_CASE_RANK=3 bash run_build_worldtrack_gifs.sh  # tennis_5
+GIF_CASE_RANK=4 bash run_build_worldtrack_gifs.sh  # football_16
+```
+
+Each run produces:
+
+```text
+tmp/vis_gif/<case_name>/
+  rgb.gif
+  gt_3d.gif
+  pred_3d.gif
+  gt_pred_3d.gif
+  rgb_gt_pred_3d.gif
+  manifest.json
+```
+
+If a Viser demo package has already been generated, GIFs can be exported from
+that package without re-running model inference:
+
+```bash
+python vis/build_worldtrack_track_gifs.py \
+  --demo-root tmp/worldtrack_demo \
+  --output-dir tmp/vis_gif/juggle_5
+```
+
+Example README display snippet:
+
+```html
+<p align="center">
+  <img src="docs/gifs/juggle_5_rgb.gif" width="31%" alt="RGB video">
+  <img src="docs/gifs/juggle_5_gt_3d.gif" width="31%" alt="GT 3D tracks">
+  <img src="docs/gifs/juggle_5_pred_3d.gif" width="31%" alt="OpenD4RT 3D tracks">
+</p>
+```
+
+For a compact single asset, use `rgb_gt_pred_3d.gif`, which places the RGB
+frames, GT 3D tracks, and predicted 3D tracks side by side.
 
 ## ToDo
 

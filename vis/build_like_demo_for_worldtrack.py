@@ -54,7 +54,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--worldtrack-npz", required=True, help="Path to one WorldTrack npz sample.")
     parser.add_argument("--output-dir", required=True, help="Output package directory.")
     parser.add_argument("--device", default="auto", choices=("auto", "cuda", "cpu"))
-    parser.add_argument("--num-frames", type=int, default=24)
+    parser.add_argument("--num-frames", type=int, default=64)
     parser.add_argument("--fps", type=float, default=15.0)
     parser.add_argument("--point-query-chunk-size", type=int, default=512)
     parser.add_argument("--query-chunk-size", type=int, default=1024)

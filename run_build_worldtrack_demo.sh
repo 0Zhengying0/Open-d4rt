@@ -46,7 +46,7 @@ echo "Using WorldTrack demo case: $WORLDTRACK_NPZ"
 
 EXP="${EXP:-checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG}"
 OUTPUT_DIR="${OUTPUT_DIR:-tmp/worldtrack_demo}"
-NUM_FRAMES="${NUM_FRAMES:-24}"
+NUM_FRAMES="${NUM_FRAMES:-64}"
 DEVICE="${DEVICE:-cuda}"
 POINT_GRID_COLS="${POINT_GRID_COLS:-64}"
 POINT_GRID_ROWS="${POINT_GRID_ROWS:-64}"

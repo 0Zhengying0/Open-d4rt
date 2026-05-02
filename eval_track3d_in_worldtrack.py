@@ -50,8 +50,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--num-frames",
         type=int,
-        default=24,
-        help="Frames per sequence to evaluate. The released WorldTrack result uses 24.",
+        default=64,
+        help="Frames per sequence to evaluate. The released WorldTrack result uses 64.",
     )
     parser.add_argument("--query-chunk-size", type=int, default=4096)
     parser.add_argument(
