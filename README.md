@@ -35,7 +35,14 @@ tools, with complete training and evaluation code planned for release.
   <img src="docs/image.png" width="950" alt="D4RT overview">
 </p>
 
-## What is D4RT?
+## 🔥 News
+
+- [2026/05/02] Released the OpenD4RT WorldTrack evaluation pipeline, Viser
+  visualization tools, and the first Hugging Face checkpoint.
+- [2026/05/02] Added 3D track GIF export for RGB, ground-truth tracks, and
+  OpenD4RT prediction comparisons.
+
+## 🧠 What is D4RT?
 
 D4RT is a feedforward video model for reconstructing and tracking dynamic
 scenes. It uses a unified transformer architecture to infer depth,
@@ -48,7 +55,7 @@ same model interface.
 See [docs/D4RT_paper.pdf](docs/D4RT_paper.pdf) for the local paper PDF
 included in this repository.
 
-## Checkpoint Zoo
+## 📦 Checkpoint Zoo
 
 | Variant | Data | Aug. | Frames | Status | Download |
 | --- | --- | --- | ---: | --- | --- |
@@ -66,7 +73,7 @@ Dynamic Replica, Kubric Full,
 TartanAir, Virtual KITTI 2, ScanNet, BlendedMVS, CO3D, and MVS-Synth. The
 10Mix setting additionally includes SynthVerse.
 
-## Checkpoint Download
+## ⬇️ Checkpoint Download
 
 Download the released checkpoint and model config from
 [Lijiaxin0111/OpenD4RT](https://huggingface.co/Lijiaxin0111/OpenD4RT/tree/main/checkpoints)
@@ -90,7 +97,7 @@ checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/
   model.yaml
 ```
 
-## Installation
+## 🔧 Installation
 
 Create the conda environment:
 
@@ -109,7 +116,7 @@ The visualization package builder calls the `ffmpeg` command-line tool to
 write MP4 assets for Viser. The conda environment includes `ffmpeg`; if you use
 `pip install -r requirements.txt`, install `ffmpeg` separately if needed.
 
-## WorldTrack Data
+## 🌍 WorldTrack Data
 
 Download the WorldTrack release from:
 
@@ -127,7 +134,7 @@ data/worldtrack_release/
   ds_mini/*.npz
 ```
 
-## Evaluation
+## 📊 Evaluation
 
 Run a quick smoke test on one `adt_mini` sequence:
 
@@ -166,7 +173,7 @@ CUDA_VISIBLE_DEVICES=1 DEVICE=cuda bash run_eval_worldtrack.sh
 SUBSETS=adt_mini LIMIT_SEQS=1 NUM_FRAMES=64 bash run_eval_worldtrack.sh
 ```
 
-## Results
+## 🏆 Results
 
 OpenD4RT_32CLIP_9Dataset_NoAUG detailed WorldTrack results:
 
@@ -177,27 +184,50 @@ OpenD4RT_32CLIP_9Dataset_NoAUG detailed WorldTrack results:
 | `pstudio_mini` | 0.7863 | 0.1811 | 0.7863 | 0.1811 | 8720 |
 | `ds_mini` | 0.7266 | 0.2944 | 0.7521 | 0.2699 | 52462 |
 
-## Model Results
+## 📈 Model Results
 
-Sparse point tracking comparison on WorldTrack-style subsets. Each cell reports
-`APD / EPE`; APD is shown as a percentage, higher APD is better, and lower EPE
-is better. Recent baseline numbers are transcribed from the sparse point
-tracking table in the provided reference image. OpenD4RT uses this repository's
-evaluation results, with `ds_mini` reported in the DR/DS column.
+Sparse point tracking comparison on WorldTrack-style subsets. APD is shown as
+a percentage, higher APD is better, and lower EPE is better. Recent baseline
+numbers are transcribed from the sparse point tracking table in the provided
+reference image. OpenD4RT uses this repository's evaluation results, with
+`ds_mini` reported in the DR column.
 
-| Model | PO | DR/DS | ADT | PStudio |
-| --- | ---: | ---: | ---: | ---: |
-| SpaTrackerV2 (2025) | 69.57 / 0.3780 | 73.43 / 0.2732 | 92.22 / 0.0915 | 74.16 / 0.2272 |
-| St4RTrack (2025) | 67.95 / 0.3140 | 73.74 / 0.2682 | 76.01 / 0.2680 | 69.67 / 0.2637 |
-| TraceAnything (2025) | 39.83 / 1.0593 | 60.63 / 0.5758 | 75.65 / 0.2511 | 71.33 / 0.2727 |
-| Any4D (2025) | 60.86 / 0.4194 | 68.39 / 0.3012 | 56.71 / 0.4320 | 60.03 / 0.3344 |
-| V-DPM (2026) | 79.79 / 0.1994 | 76.38 / 0.2378 | 66.06 / 0.3426 | 76.36 / 0.1957 |
-| **OpenD4RT_32CLIP_9Dataset_NoAUG** | 66.03 / 0.3397 | 72.66 / 0.2944 | 69.93 / 0.2964 | <mark>78.63 / 0.1811</mark> |
+<table>
+  <thead>
+    <tr>
+      <th rowspan="2" align="left">Model</th>
+      <th colspan="2" align="center">PO</th>
+      <th colspan="2" align="center">DR</th>
+      <th colspan="2" align="center">ADT</th>
+      <th colspan="2" align="center">PStudio</th>
+    </tr>
+    <tr>
+      <th align="right">APD ↑</th><th align="right">EPE ↓</th>
+      <th align="right">APD ↑</th><th align="right">EPE ↓</th>
+      <th align="right">APD ↑</th><th align="right">EPE ↓</th>
+      <th align="right">APD ↑</th><th align="right">EPE ↓</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><b>SpaTrackerV2</b> (2025)</td><td align="right">69.57</td><td align="right">0.3780</td><td align="right">73.43</td><td align="right">0.2732</td><td align="right">92.22</td><td align="right">0.0915</td><td align="right">74.16</td><td align="right">0.2272</td></tr>
+    <tr><td><b>St4RTrack</b> (2025)</td><td align="right">67.95</td><td align="right">0.3140</td><td align="right">73.74</td><td align="right">0.2682</td><td align="right">76.01</td><td align="right">0.2680</td><td align="right">69.67</td><td align="right">0.2637</td></tr>
+    <tr><td><b>TraceAnything</b> (2025)</td><td align="right">39.83</td><td align="right">1.0593</td><td align="right">60.63</td><td align="right">0.5758</td><td align="right">75.65</td><td align="right">0.2511</td><td align="right">71.33</td><td align="right">0.2727</td></tr>
+    <tr><td><b>Any4D</b> (2025)</td><td align="right">60.86</td><td align="right">0.4194</td><td align="right">68.39</td><td align="right">0.3012</td><td align="right">56.71</td><td align="right">0.4320</td><td align="right">60.03</td><td align="right">0.3344</td></tr>
+    <tr><td><b>V-DPM</b> (2026)</td><td align="right">79.79</td><td align="right">0.1994</td><td align="right">76.38</td><td align="right">0.2378</td><td align="right">66.06</td><td align="right">0.3426</td><td align="right">76.36</td><td align="right">0.1957</td></tr>
+    <tr>
+      <td><b>OpenD4RT_32CLIP_9Dataset_NoAUG</b></td>
+      <td align="right">66.03</td><td align="right">0.3397</td>
+      <td align="right">72.66</td><td align="right">0.2944</td>
+      <td align="right">69.93</td><td align="right">0.2964</td>
+      <td align="right"><strong><span style="background-color:#b7f7c6; color:#063b16; padding:2px 6px; border-radius:6px;">78.63</span></strong></td>
+      <td align="right"><strong><span style="background-color:#b7f7c6; color:#063b16; padding:2px 6px; border-radius:6px;">0.1811</span></strong></td>
+    </tr>
+  </tbody>
+</table>
 
-Highlighted cells indicate competitive OpenD4RT results among the recent
-2025/2026 baselines in this comparison.
+The green highlight marks OpenD4RT's strong PStudio result in this comparison.
 
-## Viser Demo Visualization
+## 👁️ Viser Demo Visualization
 
 The demo script defaults to high-scoring WorldTrack cases selected from
 `tmp/eval_worldtrack`, rather than an arbitrary first `.npz`. The ranking
@@ -269,7 +299,7 @@ python vis/serve_demo_viser.py --root tmp/worldtrack_demo_adt_meal --port 8082
 The generated demo package contains `assets/demo_data.json`,
 `assets/input_video.mp4`, rendered diagnostic videos, and `manifest.json`.
 
-## ToDo
+## ✅ ToDo
 
 - [x] Release the OpenD4RT model runtime for the 32-frame 9-dataset checkpoint.
 - [x] Release WorldTrack evaluation scripts and archived metrics.
@@ -280,7 +310,7 @@ The generated demo package contains `assets/demo_data.json`,
 - [ ] Release full evaluation code for the benchmarks reported in the D4RT
   paper and appendix.
 
-## License
+## 📄 License
 
 OpenD4RT is an unofficial implementation and is not affiliated with or endorsed
 by the original D4RT authors. The code in this repository is released under the
@@ -288,7 +318,7 @@ Apache 2.0 license; see [LICENSE](LICENSE). The D4RT paper, project page,
 datasets, third-party assets, and upstream dependencies remain under their
 respective licenses and terms.
 
-## Citation
+## ✏️ Citation
 
 If OpenD4RT is useful for your research, please cite the original D4RT paper:
 
@@ -303,7 +333,7 @@ If OpenD4RT is useful for your research, please cite the original D4RT paper:
 
 Official D4RT project page: <https://d4rt-paper.github.io/>.
 
-## Acknowledgements
+## 🙏 Acknowledgements
 
 This project is built upon the D4RT paper and official project materials. We
 thank the original D4RT authors for introducing the D4RT formulation, releasing
