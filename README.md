@@ -57,11 +57,11 @@ included in this repository.
 
 | Variant | Data | Aug. | Frames | Status | Download |
 | --- | --- | --- | ---: | --- | --- |
-| `32CLIP_9Dataset_NoAUG` | 9Mix | No color/crop | 32 | Released | [HF](https://huggingface.co/Lijiaxin0111/OpenD4RT/tree/main/checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG) |
-| `48CLIP_9Mix_NoCropAUG` | 9Mix | No crop | 48 | Coming | TBD |
-| `48CLIP_9Mix_AUG` | 9Mix | Yes | 48 | Coming | TBD |
-| `32CLIP_10Mix_SynthVerse_NoAUG` | 10Mix | No | 32 | Coming | TBD |
-| `48CLIP_10Mix_SynthVerse_AUG` | 10Mix | Yes | 48 | Coming | TBD |
+| `32CLIP_9Dataset_NoAUG` | 9Mix |  color aug + No crop aug | 32 | Released | [HF](https://huggingface.co/Lijiaxin0111/OpenD4RT/tree/main/checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG) |
+| `48CLIP_9Mix_NoCropAUG` | 9Mix | color aug + No crop aug  | 48 | Coming | TBD |
+| `48CLIP_9Mix_AUG` | 9Mix | color aug + crop aug | 48 | Coming | TBD |
+| `32CLIP_10Mix_SynthVerse_NoAUG` | 10Mix | color aug + No crop aug | 32 | Coming | TBD |
+| `48CLIP_10Mix_SynthVerse_AUG` | 10Mix |  color aug + crop aug | 48 | Coming | TBD |
 
 Released checkpoint local path:
 `checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/opend4rt.ckpt`.
