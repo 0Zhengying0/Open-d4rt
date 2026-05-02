@@ -229,71 +229,33 @@ The green highlight marks OpenD4RT's strong PStudio result in this comparison.
 
 ## 👁️ Viser Demo Visualization
 
-The demo script defaults to high-scoring WorldTrack cases selected from
-`tmp/eval_worldtrack`, rather than an arbitrary first `.npz`. The ranking
-prioritizes high APD, low EPE, and enough dynamic tracks for meaningful
-visualization.
-
-| Rank | Case | Subset | APD | EPE | Dyn. APD | Dyn. ratio |
-| ---: | --- | --- | ---: | ---: | ---: | ---: |
-| 1 | `juggle_5` | `pstudio_mini` | 0.9938 | 0.0555 | 0.9938 | 1.000 |
-| 2 | `fec654-3_obj_source_left_1` | `ds_mini` | 0.9248 | 0.0919 | 0.9587 | 0.578 |
-| 3 | `Apartment_release_meal_seq133_1` | `adt_mini` | 0.8783 | 0.1571 | 0.9960 | 0.810 |
-| 4 | `cab_e_3rd_12` | `po_mini` | 0.8419 | 0.1677 | 0.8868 | 0.935 |
-
-Build the default rank-1 Viser demo package. By default, the package uses the
-first 64 frames to match the evaluation setting:
+Build two example Viser demo packages. Each package uses the first 64 frames:
 
 ```bash
-OUTPUT_DIR=tmp/worldtrack_demo bash run_build_worldtrack_demo.sh
+DEMO_CASE=pstudio_mini/juggle_5.npz OUTPUT_DIR=tmp/worldtrack_demo_juggle bash run_build_worldtrack_demo.sh
+DEMO_CASE=pstudio_mini/softball_25.npz OUTPUT_DIR=tmp/worldtrack_demo_softball bash run_build_worldtrack_demo.sh
 ```
 
-Build another recommended case by rank:
+Open a demo package with Viser:
 
 ```bash
-DEMO_CASE_RANK=2 OUTPUT_DIR=tmp/worldtrack_demo_ds bash run_build_worldtrack_demo.sh
+python vis/serve_demo_viser.py --root tmp/worldtrack_demo_juggle --port 8081
 ```
 
-Or provide an explicit case:
+Open the printed Viser URL in a browser. Use another root or port to inspect
+the second case:
 
 ```bash
-DEMO_CASE=pstudio_mini/juggle_5.npz OUTPUT_DIR=tmp/worldtrack_demo bash run_build_worldtrack_demo.sh
+python vis/serve_demo_viser.py --root tmp/worldtrack_demo_softball --port 8082
 ```
 
-Build all recommended cases into separate folders:
+For a lighter/faster package:
 
 ```bash
-DEMO_CASE_RANK=1 OUTPUT_DIR=tmp/worldtrack_demo_pstudio_juggle bash run_build_worldtrack_demo.sh
-DEMO_CASE_RANK=2 OUTPUT_DIR=tmp/worldtrack_demo_ds_fec654 bash run_build_worldtrack_demo.sh
-DEMO_CASE_RANK=3 OUTPUT_DIR=tmp/worldtrack_demo_adt_meal bash run_build_worldtrack_demo.sh
-DEMO_CASE_RANK=4 OUTPUT_DIR=tmp/worldtrack_demo_po_cab bash run_build_worldtrack_demo.sh
-```
-
-For a lighter/faster package, reduce the point and track counts:
-
-```bash
+DEMO_CASE=pstudio_mini/juggle_5.npz \
 OUTPUT_DIR=tmp/worldtrack_demo_small \
 POINT_GRID_COLS=32 POINT_GRID_ROWS=32 POINT_MAX_POINTS=1024 TRACK_MAX_POINTS=96 \
 bash run_build_worldtrack_demo.sh
-```
-
-Start the interactive Viser viewer:
-
-```bash
-python vis/serve_demo_viser.py --root tmp/worldtrack_demo --port 8081
-```
-
-Open the printed Viser URL in a browser. To inspect another generated case,
-change `--root` to that package directory:
-
-```bash
-python vis/serve_demo_viser.py --root tmp/worldtrack_demo_ds_fec654 --port 8081
-```
-
-If a Viser server is already running, either stop it or use a different port:
-
-```bash
-python vis/serve_demo_viser.py --root tmp/worldtrack_demo_adt_meal --port 8082
 ```
 
 The generated demo package contains `assets/demo_data.json`,
