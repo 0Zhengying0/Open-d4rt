@@ -4,13 +4,6 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$REPO_ROOT"
 
-if [[ -f /opt/conda/etc/profile.d/conda.sh ]]; then
-  set +u
-  source /opt/conda/etc/profile.d/conda.sh
-  conda activate "${CONDA_ENV:-d4rt}"
-  set -u
-fi
-
 DATA_ROOT="${DATA_ROOT:-data/worldtrack_release}"
 DEMO_CASE_RANK="${DEMO_CASE_RANK:-1}"
 

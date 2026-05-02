@@ -5,21 +5,14 @@
     <a href="https://d4rt-paper.github.io/" target="_blank">
       <img src="https://img.shields.io/badge/%F0%9F%8C%90-D4RT%20Project-2f80ed" alt="D4RT project page">
     </a>
-    <a href="docs/D4RT_paper.pdf">
-      <img src="https://img.shields.io/badge/%F0%9F%93%84-Paper%20PDF-lightgrey" alt="D4RT paper PDF">
-    </a>
     <a href="https://huggingface.co/Lijiaxin0111/OpenD4RT/tree/main/checkpoints" target="_blank">
       <img src="https://img.shields.io/badge/%F0%9F%A4%97-Checkpoints-yellow" alt="Hugging Face checkpoints">
     </a>
     <a href="LICENSE">
       <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
     </a>
-  </p>
-  <p>
     <img src="https://img.shields.io/badge/python-3.10-blue.svg" alt="Python">
     <img src="https://img.shields.io/badge/PyTorch-2.6-red.svg" alt="PyTorch">
-    <img src="https://img.shields.io/badge/CUDA-12.4-76B900.svg" alt="CUDA">
-    <img src="https://img.shields.io/badge/task-WorldTrack%203D%20Tracking-green.svg" alt="WorldTrack">
   </p>
   <p><strong>OpenD4RT reproduces D4RT-style 4D reconstruction and tracking with released WorldTrack evaluation, visualization tools, and Hugging Face checkpoints.</strong></p>
 </div>
@@ -231,7 +224,6 @@ Tip: OpenD4RT has the strongest PStudio result in this comparison.
 | --- | --- | --- |
 | `softball_25`<br>Softball swing and fast ball motion | <img src="demo/softball_25_rgb_gt_pred_2d.gif" width="360" alt="Softball RGB video with GT and OpenD4RT 2D tracking overlay"> | <img src="demo/softball_25_gt_pred_3d.gif" width="360" alt="Softball GT and OpenD4RT 3D track comparison"> |
 | `football_16`<br>Football play with player and ball motion | <img src="demo/football_16_rgb_gt_pred_2d.gif" width="360" alt="Football RGB video with GT and OpenD4RT 2D tracking overlay"> | <img src="demo/football_16_gt_pred_3d.gif" width="360" alt="Football GT and OpenD4RT 3D track comparison"> |
-| `basketball_3`<br>Basketball play with body and ball motion | <img src="demo/basketball_3_rgb_gt_pred_2d.gif" width="360" alt="Basketball RGB video with GT and OpenD4RT 2D tracking overlay"> | <img src="demo/basketball_3_gt_pred_3d.gif" width="360" alt="Basketball GT and OpenD4RT 3D track comparison"> |
 
 ## 👁️ Viser Demo Visualization
 
