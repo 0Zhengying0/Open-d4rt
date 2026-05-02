@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -33,6 +34,20 @@ PIXEL_TO_FIXED_METRIC_THRESH: dict[int, float] = {
     4: 0.5,
     8: 1.0,
 }
+
+
+def _portable_path(path: str | Path, base_dir: Path = Path(__file__).resolve().parent) -> str:
+    item = Path(path)
+    if not item.is_absolute():
+        return item.as_posix()
+    try:
+        return item.relative_to(base_dir).as_posix()
+    except ValueError:
+        pass
+    try:
+        return Path(os.path.relpath(item, start=base_dir)).as_posix()
+    except ValueError:
+        return item.name
 
 
 def parse_args() -> argparse.Namespace:
@@ -132,7 +147,7 @@ def _load_worldtrack_sequence(npz_path: Path, num_frames: int) -> dict[str, Any]
         "intrinsics": intrinsics,
         "extrinsics_w2c": extrinsics_w2c,
         "video_name": npz_path.stem,
-        "sequence_path": str(npz_path),
+        "sequence_path": _portable_path(npz_path),
     }
 
 
@@ -479,9 +494,9 @@ def main() -> int:
 
     all_summary: dict[str, Any] = {
         "inputs": {
-            "model_config": str(args.model_config),
-            "ckpt_path": str(ckpt_path),
-            "data_root": str(data_root),
+            "model_config": _portable_path(args.model_config),
+            "ckpt_path": _portable_path(ckpt_path),
+            "data_root": _portable_path(data_root),
             "subsets": subsets,
             "num_frames": int(args.num_frames),
             "query_chunk_size": int(args.query_chunk_size),
@@ -548,7 +563,7 @@ def main() -> int:
             metrics.update(
                 {
                     "video_name": sample["video_name"],
-                    "sequence_path": str(seq_path),
+                    "sequence_path": _portable_path(seq_path),
                     "clip_frames": int(pred_payload["clip_frames"]),
                     "model_image_size": [int(model_h), int(model_w)],
                     "original_image_size": [int(original_h), int(original_w)],

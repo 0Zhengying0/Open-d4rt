@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import colorsys
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -112,6 +113,20 @@ def _project_points_to_video_frame(camera_pov_points3d: np.ndarray, camera_intri
     return np.stack([u, v], axis=-1)
 
 
+def _portable_path(path: str | Path, base_dir: Path = REPO_ROOT) -> str:
+    item = Path(path)
+    if not item.is_absolute():
+        return item.as_posix()
+    try:
+        return item.relative_to(base_dir).as_posix()
+    except ValueError:
+        pass
+    try:
+        return Path(os.path.relpath(item, start=base_dir)).as_posix()
+    except ValueError:
+        return item.name
+
+
 def load_worldtrack_sequence(npz_path: Path, num_frames: int) -> dict[str, Any]:
     pack = np.load(npz_path, allow_pickle=True)
     images_jpeg_bytes = np.asarray(pack["images_jpeg_bytes"])
@@ -153,7 +168,7 @@ def load_worldtrack_sequence(npz_path: Path, num_frames: int) -> dict[str, Any]:
         "intrinsics": intrinsics,
         "extrinsics_w2c": extrinsics_w2c,
         "video_name": npz_path.stem,
-        "sequence_path": str(npz_path),
+        "sequence_path": _portable_path(npz_path),
     }
 
 
@@ -659,7 +674,7 @@ def build_worldtrack_demo_package(
             "source": "d4rt_dense_point_queries",
         },
         "worldtrack": {
-            "npz": str(npz_path),
+            "npz": sample["sequence_path"],
             "sequencePath": sample["sequence_path"],
             "trackQuerySource": "frame0_visible_queries",
             "trackAlignment": {"type": "global_median_scale", "scale": float(scale_global)},
@@ -726,7 +741,7 @@ def build_worldtrack_demo_package(
     )
 
     manifest = {
-        "worldtrack_npz": str(npz_path),
+        "worldtrack_npz": sample["sequence_path"],
         "video_copy": f"assets/{video_copy_name}",
         "video_poster": f"assets/{poster_name}",
         "data_json": "assets/demo_data.json",
