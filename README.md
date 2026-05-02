@@ -202,10 +202,10 @@ reference image. OpenD4RT uses this repository's evaluation results, with
       <th colspan="2" align="center">PStudio</th>
     </tr>
     <tr>
-      <th align="right">APD ↑</th><th align="right">EPE ↓</th>
-      <th align="right">APD ↑</th><th align="right">EPE ↓</th>
-      <th align="right">APD ↑</th><th align="right">EPE ↓</th>
-      <th align="right">APD ↑</th><th align="right">EPE ↓</th>
+      <th align="right">APD&nbsp;↑</th><th align="right">EPE&nbsp;↓</th>
+      <th align="right">APD&nbsp;↑</th><th align="right">EPE&nbsp;↓</th>
+      <th align="right">APD&nbsp;↑</th><th align="right">EPE&nbsp;↓</th>
+      <th align="right">APD&nbsp;↑</th><th align="right">EPE&nbsp;↓</th>
     </tr>
   </thead>
   <tbody>
@@ -214,13 +214,13 @@ reference image. OpenD4RT uses this repository's evaluation results, with
     <tr><td><b>TraceAnything</b> (2025)</td><td align="right">39.83</td><td align="right">1.0593</td><td align="right">60.63</td><td align="right">0.5758</td><td align="right">75.65</td><td align="right">0.2511</td><td align="right">71.33</td><td align="right">0.2727</td></tr>
     <tr><td><b>Any4D</b> (2025)</td><td align="right">60.86</td><td align="right">0.4194</td><td align="right">68.39</td><td align="right">0.3012</td><td align="right">56.71</td><td align="right">0.4320</td><td align="right">60.03</td><td align="right">0.3344</td></tr>
     <tr><td><b>V-DPM</b> (2026)</td><td align="right">79.79</td><td align="right">0.1994</td><td align="right">76.38</td><td align="right">0.2378</td><td align="right">66.06</td><td align="right">0.3426</td><td align="right">76.36</td><td align="right">0.1957</td></tr>
-    <tr>
+    <tr style="background-color:#e8f8ee;">
       <td><b>OpenD4RT_32CLIP_9Dataset_NoAUG</b></td>
-      <td align="right">66.03</td><td align="right">0.3397</td>
-      <td align="right">72.66</td><td align="right">0.2944</td>
-      <td align="right">69.93</td><td align="right">0.2964</td>
-      <td align="right"><strong><span style="background-color:#b7f7c6; color:#063b16; padding:2px 6px; border-radius:6px;">78.63</span></strong></td>
-      <td align="right"><strong><span style="background-color:#b7f7c6; color:#063b16; padding:2px 6px; border-radius:6px;">0.1811</span></strong></td>
+      <td align="right"><b>66.03</b></td><td align="right"><b>0.3397</b></td>
+      <td align="right"><b>72.66</b></td><td align="right"><b>0.2944</b></td>
+      <td align="right"><b>69.93</b></td><td align="right"><b>0.2964</b></td>
+      <td align="right" style="background-color:#b7f7c6; color:#063b16;"><b>78.63</b></td>
+      <td align="right" style="background-color:#b7f7c6; color:#063b16;"><b>0.1811</b></td>
     </tr>
   </tbody>
 </table>
