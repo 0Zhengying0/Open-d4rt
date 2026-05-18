@@ -73,13 +73,16 @@ write MP4 assets for Viser. The conda environment includes `ffmpeg`; if you use
 | Variant | Data | Aug. | Frames | Status | Download |
 | --- | --- | --- | ---: | --- | --- |
 | `32CLIP_9Dataset_NoAUG` | 9Mix |  color aug + No crop aug | 32 | Released | [HF](https://huggingface.co/Lijiaxin0111/OpenD4RT/tree/main/checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG) |
-| `48CLIP_9Mix_NoCropAUG` | 9Mix | color aug + No crop aug  | 48 | Coming | TBD |
+| `48CLIP_9Mix_NoCropAUG` | 9Mix | color aug + No crop aug  | 48 | Released | [HF](https://huggingface.co/Lijiaxin0111/OpenD4RT/tree/main/checkpoints/OpenD4RT_48CLIP_9Mix_NoCropAUG) |
 | `48CLIP_9Mix_AUG` | 9Mix | color aug + crop aug | 48 | Coming | TBD |
 | `32CLIP_10Mix_SynthVerse_NoAUG` | 10Mix | color aug + No crop aug | 32 | Coming | TBD |
 | `48CLIP_10Mix_SynthVerse_AUG` | 10Mix |  color aug + crop aug | 48 | Coming | TBD |
 
 Released checkpoint local path:
 `checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/opend4rt.ckpt`.
+
+Additional released checkpoint local path:
+`checkpoints/OpenD4RT_48CLIP_9Mix_NoCropAUG/opend4rt.ckpt`.
 
 Tip: all rows are OpenD4RT variants. The 9Mix setting uses PointOdyssey,
 Dynamic Replica, Kubric Full,
@@ -99,6 +102,8 @@ huggingface-cli download Lijiaxin0111/OpenD4RT \
   --repo-type model \
   --include "checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/opend4rt.ckpt" \
   --include "checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/model.yaml" \
+  --include "checkpoints/OpenD4RT_48CLIP_9Mix_NoCropAUG/opend4rt.ckpt" \
+  --include "checkpoints/OpenD4RT_48CLIP_9Mix_NoCropAUG/model.yaml" \
   --local-dir .
 ```
 
@@ -106,6 +111,9 @@ Expected local files:
 
 ```text
 checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/
+  opend4rt.ckpt
+  model.yaml
+checkpoints/OpenD4RT_48CLIP_9Mix_NoCropAUG/
   opend4rt.ckpt
   model.yaml
 ```
@@ -178,6 +186,16 @@ OpenD4RT_32CLIP_9Dataset_NoAUG detailed WorldTrack results:
 | `pstudio_mini` | 0.7863 | 0.1811 | 0.7863 | 0.1811 | 8720 |
 | `ds_mini` | 0.7266 | 0.2944 | 0.7521 | 0.2699 | 52462 |
 
+OpenD4RT_48CLIP_9Mix_NoCropAUG detailed WorldTrack results
+(`step_0006000`, `anchor_clip`, evaluated with 64 frames):
+
+| Subset | APD global | EPE global | APD global dyn | EPE global dyn | Queries |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `adt_mini` | 0.7220 | 0.2758 | 0.7325 | 0.3199 | 22187 |
+| `po_mini` | 0.6799 | 0.3178 | 0.7425 | 0.2593 | 53468 |
+| `pstudio_mini` | 0.7960 | 0.1753 | 0.7960 | 0.1753 | 8720 |
+| `ds_mini` | 0.7248 | 0.2959 | 0.7488 | 0.2755 | 52462 |
+
 ## 📈 Model Results
 
 Sparse point tracking comparison on WorldTrack-style subsets. APD is shown as
@@ -209,12 +227,20 @@ reference image. OpenD4RT uses this repository's evaluation results, with
     <tr><td><b>Any4D</b> (2025)</td><td align="right">60.03</td><td align="right">0.3344</td><td align="right">60.86</td><td align="right">0.4194</td><td align="right">68.39</td><td align="right">0.3012</td><td align="right">56.71</td><td align="right">0.4320</td></tr>
     <tr><td><b>V-DPM</b> (2026)</td><td align="right">76.36</td><td align="right">0.1957</td><td align="right">79.79</td><td align="right">0.1994</td><td align="right">76.38</td><td align="right">0.2378</td><td align="right">66.06</td><td align="right">0.3426</td></tr>
     <tr>
-      <td><b>OpenD4RT (Ours) </b></td>
+      <td><b>OpenD4RT 32CLIP (Ours)</b></td>
       <td align="right"><b>78.63</b></td>
       <td align="right"><b>0.1811</b></td>
       <td align="right"><b>66.03</b></td><td align="right"><b>0.3397</b></td>
       <td align="right"><b>72.66</b></td><td align="right"><b>0.2944</b></td>
       <td align="right"><b>69.93</b></td><td align="right"><b>0.2964</b></td>
+    </tr>
+    <tr>
+      <td><b>OpenD4RT 48CLIP (Ours)</b></td>
+      <td align="right"><b>79.60</b></td>
+      <td align="right"><b>0.1753</b></td>
+      <td align="right"><b>67.99</b></td><td align="right"><b>0.3178</b></td>
+      <td align="right"><b>72.48</b></td><td align="right"><b>0.2959</b></td>
+      <td align="right"><b>72.20</b></td><td align="right"><b>0.2758</b></td>
     </tr>
   </tbody>
 </table>
