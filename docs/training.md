@@ -1,9 +1,5 @@
 # Training Guide
 
-This page keeps only the minimum information needed to prepare the environment,
-prepare the data, prepare the checkpoints, and launch the 48-frame 9Mix
-training recipe.
-
 Main training script:
 
 ```text
@@ -25,11 +21,6 @@ or pip:
 pip install -r requirements.txt
 ```
 
-If you want the training script to auto-activate conda, set:
-
-```bash
-CONDA_ENV=d4rt
-```
 
 ## 2. Required Checkpoints
 
@@ -40,11 +31,21 @@ checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/opend4rt.ckpt
 checkpoints/VideoMAE2/weights/mae-g/vit_g_hybrid_pt_1200e.pth
 ```
 
-You can override them at launch time:
+The VideoMAEv2 pre-train checkpoint should be downloaded from the official
+VideoMAEv2 Model Zoo:
+
+- <https://github.com/OpenGVLab/VideoMAEv2/blob/master/docs/MODEL_ZOO.md>
+- use the `vit_g_hybrid_pt_1200e` checkpoint entry
+
+The VideoMAEv2 page notes that you need to submit their download request form
+first, then download the checkpoint from the returned link.
+
+If your local checkpoint paths differ, override them at launch time:
 
 ```bash
-INIT_CKPT=/path/to/opend4rt_32clip.ckpt
-VIDEOMAE2_CKPT=/path/to/vit_g_hybrid_pt_1200e.pth
+INIT_CKPT=/path/to/opend4rt_32clip.ckpt \
+VIDEOMAE2_CKPT=/path/to/vit_g_hybrid_pt_1200e.pth \
+bash scripts/train_worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_8gpu.sh
 ```
 
 ## 3. Required Datasets
@@ -81,18 +82,7 @@ CO3D_ROOT=/path/to/co3d
 MVS_SYNTH_ROOT=/path/to/mvs_synth
 ```
 
-## 4. Preflight Check
-
-Check that configs, checkpoints, and launch settings are valid without starting
-training:
-
-```bash
-DRY_RUN=1 \
-VIDEOMAE2_CKPT=/path/to/vit_g_hybrid_pt_1200e.pth \
-bash scripts/train_worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_8gpu.sh
-```
-
-## 5. One-GPU Smoke Test
+## 4. One-GPU Smoke Test
 
 Run a short smoke test before the full job:
 
@@ -108,7 +98,7 @@ VIDEOMAE2_CKPT=/path/to/vit_g_hybrid_pt_1200e.pth \
 bash scripts/train_worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_8gpu.sh
 ```
 
-## 6. Full Training Command
+## 6. Training Command Sample
 
 Run the intended 8-GPU job:
 
@@ -117,19 +107,20 @@ VIDEOMAE2_CKPT=/path/to/vit_g_hybrid_pt_1200e.pth \
 bash scripts/train_worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_8gpu.sh
 ```
 
-If you want to choose devices explicitly:
+## 7. Recommended Curriculum
 
-```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
-VIDEOMAE2_CKPT=/path/to/vit_g_hybrid_pt_1200e.pth \
-bash scripts/train_worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_8gpu.sh
-```
-
-## 7. Effective Configs
-
-The training run uses:
+For actual training, a more stable recipe is to use curriculum learning over
+clip length instead of jumping directly to 48 frames:
 
 ```text
-configs/repro/worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_eval64clip/model_effective.yaml
-configs/repro/worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_eval64clip/train_effective.yaml
+16 -> 32 -> 48 clips
 ```
+
+The recommended practice is:
+
+1. train a shorter-clip model first
+2. initialize the next stage from the previous checkpoint
+3. expand the timestep embedding with linear interpretion
+
+This repository already supports that through the timestep embedding resize
+path used during initialization. The intended mode here is `linear`.

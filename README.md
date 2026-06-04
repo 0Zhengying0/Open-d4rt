@@ -311,7 +311,7 @@ The generated demo package contains `assets/demo_data.json`,
 - [x] Release the OpenD4RT model runtime for the 32-frame 9-dataset checkpoint.
 - [x] Release WorldTrack evaluation scripts and archived metrics.
 - [x] Release Viser-based qualitative visualization tools.
-- [ ] Release complete training code.
+- [×] Release complete training code.
 - [ ] Release additional checkpoints listed in the Checkpoint Zoo.
 - [ ] Release SynthVerse evaluation results.
 - [ ] Release full evaluation code for the benchmarks reported in the D4RT
