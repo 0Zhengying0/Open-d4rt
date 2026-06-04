@@ -20,4 +20,5 @@ venv/
 .codex/
 .cursorignore
 .cursorindexingignore
-**/VideoMAE2/**
+**/VideoMAE2
+checkpoints/**
