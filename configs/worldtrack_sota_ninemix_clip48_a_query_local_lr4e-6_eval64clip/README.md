@@ -1,7 +1,7 @@
 # WorldTrack SOTA 9Mix Clip48 Query-Local LR4e-6 Repro Config
 
 This directory contains the effective training configuration copied from the
-original MyD4RT run:
+reference training run:
 
 `output/exp_worldtrack_sota_0512/worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_eval64clip`
 

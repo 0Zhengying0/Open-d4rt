@@ -27,8 +27,8 @@ EXP_OUTPUT="${EXP_OUTPUT:-worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_ev
 OUT_ROOT="${OUT_ROOT:-output/exp_worldtrack_sota_0512}"
 OUT_DIR="${OUT_DIR:-${OUT_ROOT}/${EXP_OUTPUT}}"
 
-MODEL_CONFIG="${MODEL_CONFIG:-configs/repro/worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_eval64clip/model_effective.yaml}"
-TRAIN_CONFIG="${TRAIN_CONFIG:-configs/repro/worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_eval64clip/train_effective.yaml}"
+MODEL_CONFIG="${MODEL_CONFIG:-configs/worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_eval64clip/model_effective.yaml}"
+TRAIN_CONFIG="${TRAIN_CONFIG:-configs/worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_eval64clip/train_effective.yaml}"
 INIT_CKPT="${INIT_CKPT:-checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/opend4rt.ckpt}"
 INIT_TIMESTEP_EMBED_RESIZE="${INIT_TIMESTEP_EMBED_RESIZE:-linear}"
 VIDEOMAE2_CKPT="${VIDEOMAE2_CKPT:-checkpoints/VideoMAE2/weights/mae-g/vit_g_hybrid_pt_1200e.pth}"

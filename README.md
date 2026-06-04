@@ -33,6 +33,8 @@ tools, with complete training and evaluation code planned for release.
 
 ## 🔥 News
 
+- [2026/06/04] Released the full OpenD4RT training code.
+- [2025/05/20] Released the `48CLIP_9Mix_NoCropAUG` checkpoint.
 - [2026/05/02] Released the OpenD4RT WorldTrack evaluation pipeline, Viser
   visualization tools, and the first Hugging Face checkpoint.
 
@@ -146,7 +148,7 @@ bash scripts/train_worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_8gpu.sh
 ```
 
 This script launches `torchrun`, loads the reproduction configs under
-`configs/repro/`, initializes from the released 32-frame checkpoint, and runs
+`configs/`, initializes from the released 32-frame checkpoint, and runs
 the 48-frame training recipe used for the WorldTrack setting.
 
 For a quick preflight without starting training:
