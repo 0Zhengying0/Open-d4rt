@@ -1,1 +1,1 @@
-"""Evaluation helpers."""
+"""Evaluation helpers used by WorldTrack inference."""

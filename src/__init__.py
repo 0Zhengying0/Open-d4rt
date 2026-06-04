@@ -1,2 +1,2 @@
-"""OpenD4RT source package."""
+"""MyD4RT source package."""
 

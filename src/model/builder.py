@@ -20,4 +20,3 @@ def build_model(model_section_cfg: Any):
     model_name = model_section_cfg.get("name", "d4rt")
     builder = MODEL_REGISTRY.get(model_name)
     return builder(model_section_cfg)
-

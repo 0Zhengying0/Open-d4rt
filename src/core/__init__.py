@@ -1,4 +1,4 @@
-"""Core runtime utilities for OpenD4RT."""
+"""Core runtime utilities for MyD4RT."""
 
 from .checkpoint import load_checkpoint, save_checkpoint
 from .config import ConfigNode, apply_overrides, load_yaml_config
