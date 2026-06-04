@@ -28,24 +28,14 @@ if str(REPO_ROOT) not in sys.path:
 from infer_track_3d import _resolve_device, _resize_video, _unwrap_state_dict
 from src.core import build_logger, load_checkpoint, load_yaml_config, seed_everything
 from src.model import build_model
-try:
-    from .build_like_demo import (
-        _build_uv_grid,
-        _compute_point_motion_scores,
-        _export_demo_data,
-        _export_video_from_frames,
-        _jsonable_float_array,
-        _predict_camera_branches,
-    )
-except ImportError:
-    from build_like_demo import (
-        _build_uv_grid,
-        _compute_point_motion_scores,
-        _export_demo_data,
-        _export_video_from_frames,
-        _jsonable_float_array,
-        _predict_camera_branches,
-    )
+from vis.build_like_demo import (
+    _build_uv_grid,
+    _compute_point_motion_scores,
+    _export_demo_data,
+    _export_video_from_frames,
+    _jsonable_float_array,
+    _predict_camera_branches,
+)
 
 
 def parse_args() -> argparse.Namespace:

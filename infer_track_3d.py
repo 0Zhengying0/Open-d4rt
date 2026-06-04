@@ -5,10 +5,11 @@ from __future__ import annotations
 from typing import Any
 
 import cv2
+import imageio.v2 as imageio
 import numpy as np
 import torch
 
-from src.eval.tasks import _encode_model_memory, _model_clip_frames, _run_model_for_queries
+from src.eval.tasks import _encode_model_memory, _model_clip_frames, _run_model_for_queries, _umeyama_sim3
 
 
 def _resolve_device(raw: str) -> torch.device:
@@ -40,6 +41,49 @@ def _resize_video(video_rgb: np.ndarray, image_hw: tuple[int, int]) -> np.ndarra
         for frame in video_rgb
     ]
     return np.stack(resized, axis=0)
+
+
+def _load_video_rgb(path: Path, max_frames: int) -> tuple[np.ndarray, float]:
+    cap = cv2.VideoCapture(str(path))
+    if not cap.isOpened():
+        raise RuntimeError(f"Failed to open video: {path}")
+    fps = float(cap.get(cv2.CAP_PROP_FPS))
+    if not np.isfinite(fps) or fps <= 0.0:
+        fps = 10.0
+    frames: list[np.ndarray] = []
+    while True:
+        ok, frame_bgr = cap.read()
+        if not ok:
+            break
+        frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+        frames.append(frame_rgb)
+        if max_frames > 0 and len(frames) >= int(max_frames):
+            break
+    cap.release()
+    if not frames:
+        raise RuntimeError(f"No frames decoded from video: {path}")
+    return np.stack(frames, axis=0), fps
+
+
+def _grid_query_points(
+    width: int,
+    height: int,
+    cols: int,
+    rows: int,
+    margin_ratio: float,
+    max_points: int,
+) -> np.ndarray:
+    cols = max(1, int(cols))
+    rows = max(1, int(rows))
+    margin_x = float(max(width - 1, 0)) * float(np.clip(margin_ratio, 0.0, 0.45))
+    margin_y = float(max(height - 1, 0)) * float(np.clip(margin_ratio, 0.0, 0.45))
+    xs = np.linspace(margin_x, float(max(width - 1, 0)) - margin_x, num=cols, dtype=np.float32)
+    ys = np.linspace(margin_y, float(max(height - 1, 0)) - margin_y, num=rows, dtype=np.float32)
+    grid = np.stack(np.meshgrid(xs, ys, indexing="xy"), axis=-1).reshape(-1, 2)
+    if grid.shape[0] > max_points:
+        pick = np.linspace(0, grid.shape[0] - 1, num=max_points, dtype=np.int64)
+        grid = grid[pick]
+    return grid.astype(np.float32)
 
 
 def _make_anchor_clip_indices(num_frames: int, clip_frames: int, target_idx: int, source_idx: int = 0) -> np.ndarray:
@@ -90,6 +134,86 @@ def _make_anchor_clip_indices(num_frames: int, clip_frames: int, target_idx: int
             tail = np.concatenate([np.asarray([cand], dtype=np.int64), tail], axis=0)
         tail = np.sort(tail)[-tail_len:]
     return np.concatenate([np.asarray([0], dtype=np.int64), tail], axis=0)
+
+
+def _make_sliding_window_clip_ranges(
+    num_frames: int,
+    clip_frames: int,
+    overlap_frames: int | None = None,
+) -> list[tuple[int, int]]:
+    num_frames = int(num_frames)
+    clip_frames = max(1, int(clip_frames))
+    if num_frames <= clip_frames:
+        return [(0, num_frames)]
+    overlap = clip_frames // 2 if overlap_frames is None else int(overlap_frames)
+    overlap = max(1, min(overlap, clip_frames - 1))
+    stride = max(1, clip_frames - overlap)
+    starts = list(range(0, max(num_frames - clip_frames, 0) + 1, stride))
+    last_start = max(0, num_frames - clip_frames)
+    if not starts or starts[-1] != last_start:
+        starts.append(last_start)
+    return [(int(start), int(min(num_frames, start + clip_frames))) for start in starts]
+
+
+def _apply_sim3_to_xyz(
+    xyz: np.ndarray,
+    scale: float,
+    rot: np.ndarray,
+    trans: np.ndarray,
+) -> np.ndarray:
+    src = np.asarray(xyz, dtype=np.float64)
+    out = np.full_like(src, np.nan, dtype=np.float64)
+    flat_src = src.reshape(-1, 3)
+    flat_out = out.reshape(-1, 3)
+    valid = np.isfinite(flat_src).all(axis=1)
+    if np.any(valid):
+        flat_out[valid] = (float(scale) * (np.asarray(rot, dtype=np.float64) @ flat_src[valid].T)).T + np.asarray(
+            trans, dtype=np.float64
+        )
+    return out.astype(np.float32)
+
+
+def _estimate_overlap_sim3(
+    *,
+    prev_xyz_qt3: np.ndarray,
+    curr_xyz_qt3: np.ndarray,
+    prev_vis_qt: np.ndarray,
+    curr_vis_qt: np.ndarray,
+    prev_conf_qt: np.ndarray,
+    curr_conf_qt: np.ndarray,
+    keep_ratio: float = 0.85,
+) -> tuple[float, np.ndarray, np.ndarray] | None:
+    prev_xyz = np.asarray(prev_xyz_qt3, dtype=np.float64)
+    curr_xyz = np.asarray(curr_xyz_qt3, dtype=np.float64)
+    prev_vis = np.asarray(prev_vis_qt, dtype=bool)
+    curr_vis = np.asarray(curr_vis_qt, dtype=bool)
+    prev_conf = np.asarray(prev_conf_qt, dtype=np.float64)
+    curr_conf = np.asarray(curr_conf_qt, dtype=np.float64)
+
+    valid = (
+        np.isfinite(prev_xyz).all(axis=-1)
+        & np.isfinite(curr_xyz).all(axis=-1)
+        & prev_vis
+        & curr_vis
+        & np.isfinite(prev_conf)
+        & np.isfinite(curr_conf)
+    )
+    if int(np.count_nonzero(valid)) < 3:
+        return None
+    src = curr_xyz[valid]
+    dst = prev_xyz[valid]
+    scores = np.minimum(prev_conf[valid], curr_conf[valid])
+    if scores.size >= 4:
+        order = np.argsort(scores)[::-1]
+        keep = max(3, int(np.ceil(float(scores.size) * float(np.clip(keep_ratio, 0.0, 1.0)))))
+        pick = order[:keep]
+        src = src[pick]
+        dst = dst[pick]
+    sim3 = _umeyama_sim3(src, dst)
+    if sim3 is None:
+        return None
+    scale, rot, trans = sim3
+    return float(scale), np.asarray(rot, dtype=np.float64), np.asarray(trans, dtype=np.float64)
 
 
 def _build_query_for_targets(
@@ -252,6 +376,9 @@ def _infer_tracks(
     query_uv_norm: np.ndarray,
     query_chunk_size: int,
     query_src_indices_global: np.ndarray | None = None,
+    umeyama_slide_window: bool = False,
+    umeyama_slide_window_dense: bool = False,
+    dense_grid_size: int = 32,
 ) -> dict[str, np.ndarray]:
     device = next(model.parameters()).device
     num_frames = int(video_model_rgb.shape[0])
@@ -269,10 +396,12 @@ def _infer_tracks(
     tracks_visibility = np.zeros((num_queries, num_frames), dtype=bool)
     tracks_visibility_logits = np.full((num_queries, num_frames), np.nan, dtype=np.float32)
     tracks_confidence = np.full((num_queries, num_frames), np.nan, dtype=np.float32)
+    dense_mode = bool(umeyama_slide_window_dense)
+    slide_window_enabled = bool(umeyama_slide_window) or dense_mode
     stitch_diagnostics: dict[str, Any] = {
-        "mode": "anchor_clip",
+        "mode": "umeyama_slide_window_dense" if dense_mode else ("umeyama_slide_window" if slide_window_enabled else "anchor_clip"),
         "clip_frames": int(clip_frames),
-        "dense_grid_size": 0,
+        "dense_grid_size": int(dense_grid_size) if dense_mode else 0,
         "keep_ratio": 0.85,
         "chunks": [],
     }
