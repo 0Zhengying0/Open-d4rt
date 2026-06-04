@@ -1,7 +1,7 @@
-# WorldTrack SOTA 9Mix Clip48 Query-Local LR4e-6 Repro Config
+# Configs
 
-This directory contains the effective training configuration copied from the
-reference training run:
+This directory contains the effective training configuration used by the
+48-frame 9Mix training recipe.
 
 `output/exp_worldtrack_sota_0512/worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_eval64clip`
 
@@ -12,7 +12,7 @@ Files:
   hard query ratio 0.2, static local/global timestep sampling, 30000 total
   steps, peak lr `4e-6`, final lr `4e-7`.
 
-The original run initialized from the 32-frame 9Mix checkpoint and resized the
+The training run initializes from the 32-frame 9Mix checkpoint and resizes the
 learned timestep embeddings with linear interpolation. Use:
 
 ```bash

@@ -120,7 +120,16 @@ The recommended practice is:
 
 1. train a shorter-clip model first
 2. initialize the next stage from the previous checkpoint
-3. expand the timestep embedding with linear interpretion
+3. expand the timestep embedding with linear interpolation
 
 This repository already supports that through the timestep embedding resize
 path used during initialization. The intended mode here is `linear`.
+
+## 8. Effective Configs
+
+The training run uses:
+
+```text
+configs/model_effective.yaml
+configs/train_effective.yaml
+```

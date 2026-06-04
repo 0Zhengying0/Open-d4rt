@@ -67,11 +67,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train MyD4RT")
     parser.add_argument(
         "--model-config",
-        default="configs/worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_eval64clip/model_effective.yaml",
+        default="configs/model_effective.yaml",
     )
     parser.add_argument(
         "--train-config",
-        default="configs/worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_eval64clip/train_effective.yaml",
+        default="configs/train_effective.yaml",
     )
     parser.add_argument("--train-manifest", default=None, help="Comma-separated manifest paths for train split.")
     parser.add_argument("--val-manifest", default=None, help="Comma-separated manifest paths for val split.")
