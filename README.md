@@ -136,6 +136,30 @@ data/worldtrack_release/
   ds_mini/*.npz
 ```
 
+## 🏋️ Training
+
+The main reproduction entrypoint for the 48-frame 9Mix run is:
+
+```bash
+VIDEOMAE2_CKPT=/path/to/vit_g_hybrid_pt_1200e.pth \
+bash scripts/train_worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_8gpu.sh
+```
+
+This script launches `torchrun`, loads the reproduction configs under
+`configs/repro/`, initializes from the released 32-frame checkpoint, and runs
+the 48-frame training recipe used for the WorldTrack setting.
+
+For a quick preflight without starting training:
+
+```bash
+DRY_RUN=1 \
+VIDEOMAE2_CKPT=/path/to/vit_g_hybrid_pt_1200e.pth \
+bash scripts/train_worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_8gpu.sh
+```
+
+Full training setup, required checkpoints, dataset root overrides, and smoke
+test commands are documented in [docs/training.md](docs/training.md).
+
 ## 📊 Evaluation
 
 Run a quick smoke test on one `adt_mini` sequence:

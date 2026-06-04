@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -36,58 +35,6 @@ PIXEL_TO_FIXED_METRIC_THRESH: dict[int, float] = {
 }
 
 
-def _portable_path(path: str | Path, base_dir: Path = Path(__file__).resolve().parent) -> str:
-    item = Path(path)
-    if not item.is_absolute():
-        return item.as_posix()
-    try:
-        return item.relative_to(base_dir).as_posix()
-    except ValueError:
-        pass
-    try:
-        return Path(os.path.relpath(item, start=base_dir)).as_posix()
-    except ValueError:
-        return item.name
-
-
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Evaluate D4RT on WorldTrack using the St4RTrack tracking protocol.")
-    parser.add_argument("--model-config", required=True, help="Model config yaml.")
-    parser.add_argument("--ckpt-path", required=True, help="Checkpoint path.")
-    parser.add_argument("--data-root", default="data/worldtrack_release", help="WorldTrack root directory.")
-    parser.add_argument(
-        "--subsets",
-        default="adt_mini,po_mini,pstudio_mini,ds_mini",
-        help="Comma-separated WorldTrack subsets.",
-    )
-    parser.add_argument("--output-dir", default="tmp/eval/worldtrack_d4rt")
-    parser.add_argument("--device", default="auto", choices=("auto", "cuda", "cpu"))
-    parser.add_argument(
-        "--num-frames",
-        type=int,
-        default=64,
-        help="Frames per sequence to evaluate. The released WorldTrack result uses 64.",
-    )
-    parser.add_argument("--query-chunk-size", type=int, default=4096)
-    parser.add_argument(
-        "--umeyama-slide-window",
-        "--umeyama_slide_window",
-        action="store_true",
-        dest="umeyama_slide_window",
-        help="Use paper-style overlapped sliding windows with Umeyama Sim(3) stitching for long sequences.",
-    )
-    parser.add_argument(
-        "--umeyama-slide-window-dense",
-        "--umeyama_slide_window_dense",
-        action="store_true",
-        dest="umeyama_slide_window_dense",
-        help="Use dense high-confidence overlap point clouds to estimate chunk Sim(3) stitching.",
-    )
-    parser.add_argument("--limit-seqs", type=int, default=0, help="Optional cap per subset. <=0 disables.")
-    parser.add_argument("--save-per-sequence", action="store_true", help="Write per-sequence metric JSON files.")
-    return parser.parse_args()
-
-
 def _decode_jpeg_rgb(frame_bytes: bytes) -> np.ndarray:
     arr = np.frombuffer(frame_bytes, np.uint8)
     image_bgr = cv2.imdecode(arr, flags=cv2.IMREAD_UNCHANGED)
@@ -98,7 +45,8 @@ def _decode_jpeg_rgb(frame_bytes: bytes) -> np.ndarray:
 
 def _project_points_to_video_frame(camera_pov_points3d: np.ndarray, camera_intrinsics: np.ndarray) -> np.ndarray:
     pts = np.asarray(camera_pov_points3d, dtype=np.float64)
-    fx, fy, cx, cy = np.asarray(camera_intrinsics, dtype=np.float64).reshape(-1)[:4]
+    intr = np.asarray(camera_intrinsics, dtype=np.float64).reshape(-1)
+    fx, fy, cx, cy = intr[:4]
     z = pts[..., 2]
     safe_z = np.where(np.abs(z) > 1e-8, z, np.nan)
     u = (pts[..., 0] / safe_z) * fx + cx
@@ -106,7 +54,7 @@ def _project_points_to_video_frame(camera_pov_points3d: np.ndarray, camera_intri
     return np.stack([u, v], axis=-1)
 
 
-def _load_worldtrack_sequence(npz_path: Path, num_frames: int) -> dict[str, Any]:
+def load_worldtrack_sequence(npz_path: Path, num_frames: int) -> dict[str, Any]:
     pack = np.load(npz_path, allow_pickle=True)
     images_jpeg_bytes = np.asarray(pack["images_jpeg_bytes"])
     tracks_xyz_cam = np.asarray(pack["tracks_XYZ"], dtype=np.float64)
@@ -114,7 +62,12 @@ def _load_worldtrack_sequence(npz_path: Path, num_frames: int) -> dict[str, Any]
     visibility = np.asarray(pack["visibility"], dtype=bool)
     extrinsics_w2c_raw = pack["extrinsics_w2c"] if "extrinsics_w2c" in pack.files else None
 
-    frame_count = min(int(num_frames), int(images_jpeg_bytes.shape[0]), int(tracks_xyz_cam.shape[0]), int(visibility.shape[0]))
+    frame_count = min(
+        int(num_frames),
+        int(images_jpeg_bytes.shape[0]),
+        int(tracks_xyz_cam.shape[0]),
+        int(visibility.shape[0]),
+    )
     if frame_count <= 0:
         raise RuntimeError(f"No usable frames in {npz_path}")
 
@@ -147,8 +100,32 @@ def _load_worldtrack_sequence(npz_path: Path, num_frames: int) -> dict[str, Any]
         "intrinsics": intrinsics,
         "extrinsics_w2c": extrinsics_w2c,
         "video_name": npz_path.stem,
-        "sequence_path": _portable_path(npz_path),
+        "sequence_path": str(npz_path),
     }
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Evaluate D4RT on WorldTrack using the St4RTrack tracking protocol.")
+    parser.add_argument("--model-config", required=True, help="Model config yaml.")
+    parser.add_argument("--ckpt-path", required=True, help="Checkpoint path.")
+    parser.add_argument("--data-root", default="data/worldtrack_release", help="WorldTrack root directory.")
+    parser.add_argument(
+        "--subsets",
+        default="adt_mini,po_mini,pstudio_mini,ds_mini",
+        help="Comma-separated WorldTrack subsets.",
+    )
+    parser.add_argument("--output-dir", default="tmp/eval/worldtrack_d4rt")
+    parser.add_argument("--device", default="auto", choices=("auto", "cuda", "cpu"))
+    parser.add_argument(
+        "--num-frames",
+        type=int,
+        default=1000000,
+        help="Frames per sequence to evaluate. Default is a large cap, so full WorldTrack cases are used.",
+    )
+    parser.add_argument("--query-chunk-size", type=int, default=4096)
+    parser.add_argument("--limit-seqs", type=int, default=0, help="Optional cap per subset. <=0 disables.")
+    parser.add_argument("--save-per-sequence", action="store_true", help="Write per-sequence metric JSON files.")
+    return parser.parse_args()
 
 
 def _compute_scale_factor_global(gt_points: np.ndarray, pred_points: np.ndarray) -> float:
@@ -462,11 +439,6 @@ def main() -> int:
 
     cfg = load_yaml_config(args.model_config)
     seed_everything(int(cfg.get_path("experiment.seed", 42)), deterministic=True)
-    encoder_cfg = cfg.get_path("model.encoder", {})
-    if isinstance(encoder_cfg, dict):
-        pretrained_cfg = encoder_cfg.setdefault("pretrained", {})
-        if isinstance(pretrained_cfg, dict):
-            pretrained_cfg["enabled"] = False
 
     ckpt_path = Path(args.ckpt_path)
     if not ckpt_path.exists():
@@ -494,14 +466,12 @@ def main() -> int:
 
     all_summary: dict[str, Any] = {
         "inputs": {
-            "model_config": _portable_path(args.model_config),
-            "ckpt_path": _portable_path(ckpt_path),
-            "data_root": _portable_path(data_root),
+            "model_config": str(args.model_config),
+            "ckpt_path": str(ckpt_path),
+            "data_root": str(data_root),
             "subsets": subsets,
             "num_frames": int(args.num_frames),
             "query_chunk_size": int(args.query_chunk_size),
-            "umeyama_slide_window": bool(args.umeyama_slide_window),
-            "umeyama_slide_window_dense": bool(args.umeyama_slide_window_dense),
         },
         "subsets": {},
     }
@@ -524,7 +494,7 @@ def main() -> int:
         subset_out_dir.mkdir(parents=True, exist_ok=True)
 
         for seq_path in seq_paths:
-            sample = _load_worldtrack_sequence(seq_path, num_frames=int(args.num_frames))
+            sample = load_worldtrack_sequence(seq_path, num_frames=int(args.num_frames))
             video_rgb = sample["video_rgb"]
             original_h = int(video_rgb.shape[1])
             original_w = int(video_rgb.shape[2])
@@ -555,15 +525,19 @@ def main() -> int:
                 video_model_rgb=video_model_rgb,
                 query_uv_norm=query_uv_norm,
                 query_chunk_size=int(args.query_chunk_size),
-                umeyama_slide_window=bool(args.umeyama_slide_window),
-                umeyama_slide_window_dense=bool(args.umeyama_slide_window_dense),
             )
             pred_tracks_ref0 = np.asarray(pred_payload["tracks_xyz_ref0"], dtype=np.float64).transpose(1, 0, 2)
             metrics = _metrics_for_sequence(gt_tracks_world=gt_tracks_world, pred_tracks_ref0=pred_tracks_ref0, compute_dyn=True)
+            _, pred_tracks_aligned_global, _, _, _ = _compute_average_pts_within_thresh(
+                gt_tracks_world,
+                pred_tracks_ref0,
+                scaling="global",
+                compute_epe=True,
+            )
             metrics.update(
                 {
                     "video_name": sample["video_name"],
-                    "sequence_path": _portable_path(seq_path),
+                    "sequence_path": str(seq_path),
                     "clip_frames": int(pred_payload["clip_frames"]),
                     "model_image_size": [int(model_h), int(model_w)],
                     "original_image_size": [int(original_h), int(original_w)],
@@ -593,7 +567,7 @@ def main() -> int:
                         "stitch_failed_chunks": int(len(failed_chunks)),
                         "stitch_diagnostics": stitch_diagnostics,
                     }
-                )
+            )
             subset_results.append(metrics)
             logger.info(
                 "subset=%s seq=%s APD(global)=%.4f EPE(global)=%.4f queries=%d clip_frames=%d",

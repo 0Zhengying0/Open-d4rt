@@ -5,7 +5,6 @@ channels:
 dependencies:
   - python=3.10
   - pip
-  - ffmpeg
   - pip:
       - --extra-index-url=https://download.pytorch.org/whl/cu124
       - torch==2.6.0+cu124
@@ -17,5 +16,5 @@ dependencies:
       - pillow==12.1.1
       - matplotlib==3.10.8
       - tqdm==4.67.3
-      - viser==1.0.20
-      - huggingface_hub==1.13.0
+      - tensorboard==2.20.0
+      - lz4==4.4.5
