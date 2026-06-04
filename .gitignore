@@ -20,3 +20,4 @@ venv/
 .codex/
 .cursorignore
 .cursorindexingignore
+**/VideoMAE2/**

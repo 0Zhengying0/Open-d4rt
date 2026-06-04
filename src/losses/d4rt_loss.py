@@ -7,15 +7,6 @@ from typing import Any
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-from src.model.camera_geometry import (
-    extrinsics_to_pose_encoding,
-    intrinsics_to_fov,
-    normalize_pose_encoding,
-    rebase_world_to_first_camera,
-    relative_pose_from_absolute,
-    rotation_geodesic_distance,
-)
 from src.model.utils import masked_mean, masked_mean_per_sample
 
 
@@ -268,123 +259,6 @@ class D4RTLoss(nn.Module):
         metrics["loss_normal"] = norm_loss
         return norm_loss
 
-    def _compute_camera_loss(
-        self,
-        outputs: dict[str, torch.Tensor],
-        batch: dict[str, Any],
-        metrics: dict[str, torch.Tensor],
-    ) -> torch.Tensor:
-        cfg = self.loss_cfg.get("camera", {})
-        if not bool(cfg.get("enabled", False)):
-            return outputs["xyz_3d"].new_zeros(())
-        if "camera_pose_encoding" not in outputs or "camera_extrinsics_cw" not in outputs:
-            metrics["loss_camera"] = outputs["xyz_3d"].new_zeros(())
-            return outputs["xyz_3d"].new_zeros(())
-
-        camera = batch.get("camera", {})
-        video = batch.get("video")
-        if not isinstance(camera, dict) or not torch.is_tensor(video):
-            metrics["loss_camera"] = outputs["xyz_3d"].new_zeros(())
-            return outputs["xyz_3d"].new_zeros(())
-        k_seq = camera.get("K")
-        t_wc_seq = camera.get("T_wc")
-        camera_valid = camera.get("camera_valid")
-        if not all(torch.is_tensor(x) for x in (k_seq, t_wc_seq, camera_valid)):
-            metrics["loss_camera"] = outputs["xyz_3d"].new_zeros(())
-            return outputs["xyz_3d"].new_zeros(())
-
-        pred_pose = outputs["camera_pose_encoding"]
-        pred_t_cw = outputs["camera_extrinsics_cw"]
-        if pred_pose.ndim != 3 or pred_pose.shape[-1] != 9:
-            raise ValueError(f"Expected camera_pose_encoding [B,T,9], got {tuple(pred_pose.shape)}")
-        if pred_t_cw.shape[-2:] != (3, 4):
-            raise ValueError(f"Expected camera_extrinsics_cw [B,T,3,4], got {tuple(pred_t_cw.shape)}")
-
-        timesteps = min(pred_pose.shape[1], t_wc_seq.shape[1], k_seq.shape[1], camera_valid.shape[1])
-        pred_pose = pred_pose[:, :timesteps].float()
-        pred_t_cw = pred_t_cw[:, :timesteps].float()
-        k_seq = k_seq[:, :timesteps].to(device=pred_pose.device, dtype=torch.float32)
-        t_wc_seq = t_wc_seq[:, :timesteps].to(device=pred_pose.device, dtype=torch.float32)
-        valid = camera_valid[:, :timesteps].to(device=pred_pose.device, dtype=torch.bool)
-        finite_valid = torch.isfinite(k_seq).flatten(2).all(dim=-1) & torch.isfinite(t_wc_seq).flatten(2).all(dim=-1)
-        valid = valid & finite_valid
-        valid = valid & valid[:, :1]
-        if not bool(valid.any().item()):
-            zero = pred_pose.new_zeros(())
-            metrics["loss_camera"] = zero
-            metrics["camera_valid_count"] = zero
-            return zero
-
-        image_h = int(video.shape[-2])
-        image_w = int(video.shape[-1])
-        eye4 = torch.eye(4, dtype=t_wc_seq.dtype, device=t_wc_seq.device).view(1, 1, 4, 4)
-        eye3 = torch.eye(3, dtype=k_seq.dtype, device=k_seq.device).view(1, 1, 3, 3)
-        safe_t_wc = torch.where(valid[..., None, None], t_wc_seq, eye4)
-        safe_k = torch.where(valid[..., None, None], k_seq, eye3)
-        gt_t_cw = rebase_world_to_first_camera(safe_t_wc)
-        gt_fov = intrinsics_to_fov(safe_k, image_size_hw=(image_h, image_w))
-        pred_pose_for_loss = normalize_pose_encoding(pred_pose)
-        gt_pose = extrinsics_to_pose_encoding(gt_t_cw, gt_fov)
-
-        pose_err = (pred_pose_for_loss - gt_pose).abs().mean(dim=-1)
-        trans_err = (pred_t_cw[..., :3, 3] - gt_t_cw[..., :3, 3]).abs().mean(dim=-1)
-        rot_err = rotation_geodesic_distance(pred_t_cw[..., :3, :3], gt_t_cw[..., :3, :3])
-        fov_err = (pred_pose[..., 7:9] - gt_fov).abs().mean(dim=-1)
-
-        total = pred_pose.new_zeros(())
-        pose_loss = masked_mean(pose_err, valid) * float(cfg.get("weight_pose_enc", cfg.get("weight", 1.0)))
-        trans_loss = masked_mean(trans_err, valid) * float(cfg.get("weight_trans", 1.0))
-        rot_loss = masked_mean(rot_err, valid) * float(cfg.get("weight_rot", 1.0))
-        fov_loss = masked_mean(fov_err, valid) * float(cfg.get("weight_fov", 0.5))
-        total = total + pose_loss + trans_loss + rot_loss + fov_loss
-
-        metrics["loss_camera_pose_enc"] = pose_loss
-        metrics["loss_camera_trans"] = trans_loss
-        metrics["loss_camera_rot"] = rot_loss
-        metrics["loss_camera_fov"] = fov_loss
-        metrics["camera_valid_count"] = valid.to(dtype=pred_pose.dtype).sum()
-
-        rel_cfg = cfg.get("relative_pose", {})
-        rel_enabled = bool(rel_cfg.get("enabled", False)) or bool(cfg.get("relative_pose_enabled", False))
-        if rel_enabled and "camera_relative_pairs" in outputs and "camera_relative_pose" in outputs:
-            pairs = outputs["camera_relative_pairs"]
-            pred_rel = outputs["camera_relative_pose"]
-            if torch.is_tensor(pairs) and torch.is_tensor(pred_rel) and pairs.ndim == 3 and pred_rel.shape[-2:] == (3, 4):
-                pred_rel = pred_rel.float()
-                pairs = pairs[:, : pred_rel.shape[1]].long().to(device=pred_pose.device)
-                gt_rel = relative_pose_from_absolute(gt_t_cw, pairs)
-                pair_valid = self._relative_pair_valid(valid, pairs)
-                if bool(pair_valid.any().item()):
-                    rel_rot_err = rotation_geodesic_distance(pred_rel[..., :3, :3], gt_rel[..., :3, :3])
-                    rel_rot_loss = masked_mean(rel_rot_err, pair_valid) * float(rel_cfg.get("weight_rot", 1.0))
-                    pred_t_raw = pred_rel[..., :3, 3]
-                    gt_t_raw = gt_rel[..., :3, 3]
-                    pred_t_norm = pred_t_raw.norm(dim=-1)
-                    gt_t_norm = gt_t_raw.norm(dim=-1)
-                    trans_valid = pair_valid & (pred_t_norm > 1e-6) & (gt_t_norm > 1e-6)
-                    if bool(trans_valid.any().item()):
-                        pred_t = F.normalize(pred_t_raw, dim=-1, eps=1e-8)
-                        gt_t = F.normalize(gt_t_raw, dim=-1, eps=1e-8)
-                        rel_trans_err = 1.0 - (pred_t * gt_t).sum(dim=-1).clamp(-1.0, 1.0)
-                        rel_trans_loss = masked_mean(rel_trans_err, trans_valid) * float(rel_cfg.get("weight_trans", 0.1))
-                    else:
-                        rel_trans_loss = pred_pose.new_zeros(())
-                    total = total + rel_rot_loss + rel_trans_loss
-                    metrics["loss_camera_relative_rot"] = rel_rot_loss
-                    metrics["loss_camera_relative_trans"] = rel_trans_loss
-                    metrics["camera_relative_valid_count"] = pair_valid.to(dtype=pred_pose.dtype).sum()
-                    metrics["camera_relative_trans_valid_count"] = trans_valid.to(dtype=pred_pose.dtype).sum()
-
-        metrics["loss_camera"] = total
-        return total
-
-    @staticmethod
-    def _relative_pair_valid(frame_valid: torch.Tensor, pairs: torch.Tensor) -> torch.Tensor:
-        bsz, timesteps = frame_valid.shape
-        pairs = pairs.long().clamp(min=0, max=max(timesteps - 1, 0))
-        batch_idx = torch.arange(bsz, device=frame_valid.device)[:, None]
-        return frame_valid[batch_idx, pairs[..., 0]] & frame_valid[batch_idx, pairs[..., 1]]
-
     def forward(
         self,
         outputs: dict[str, torch.Tensor],
@@ -401,7 +275,6 @@ class D4RTLoss(nn.Module):
         total = total + self._compute_vis_loss(outputs, target, mask, metrics)
         total = total + self._compute_disp_loss(outputs, target, mask, metrics)
         total = total + self._compute_normal_loss(outputs, target, mask, metrics)
-        total = total + self._compute_camera_loss(outputs, batch, metrics)
 
         metrics["loss_total"] = total
         return total, metrics
