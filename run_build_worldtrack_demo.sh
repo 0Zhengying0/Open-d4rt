@@ -41,6 +41,9 @@ EXP="${EXP:-checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG}"
 OUTPUT_DIR="${OUTPUT_DIR:-tmp/worldtrack_demo}"
 NUM_FRAMES="${NUM_FRAMES:-64}"
 DEVICE="${DEVICE:-cuda}"
+PYTHON_BIN="${PYTHON_BIN:-python}"
+PRECISION="${PRECISION:-fp32}"
+MAX_GPU_MEMORY_GIB="${MAX_GPU_MEMORY_GIB:-0}"
 POINT_GRID_COLS="${POINT_GRID_COLS:-64}"
 POINT_GRID_ROWS="${POINT_GRID_ROWS:-64}"
 POINT_MAX_POINTS="${POINT_MAX_POINTS:-4096}"
@@ -49,13 +52,15 @@ QUERY_CHUNK_SIZE="${QUERY_CHUNK_SIZE:-1024}"
 POINT_QUERY_CHUNK_SIZE="${POINT_QUERY_CHUNK_SIZE:-512}"
 CAMERA_QUERY_CHUNK_SIZE="${CAMERA_QUERY_CHUNK_SIZE:-1024}"
 
-python vis/build_like_demo_for_worldtrack.py \
+exec "$PYTHON_BIN" vis/build_like_demo_for_worldtrack.py \
   --config "$EXP/model.yaml" \
   --ckpt-path "$EXP/opend4rt.ckpt" \
   --worldtrack-npz "$WORLDTRACK_NPZ" \
   --output-dir "$OUTPUT_DIR" \
   --num-frames "$NUM_FRAMES" \
   --device "$DEVICE" \
+  --precision "$PRECISION" \
+  --max-gpu-memory-gib "$MAX_GPU_MEMORY_GIB" \
   --point-grid-cols "$POINT_GRID_COLS" \
   --point-grid-rows "$POINT_GRID_ROWS" \
   --point-max-points "$POINT_MAX_POINTS" \

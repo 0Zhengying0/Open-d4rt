@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -22,8 +23,16 @@ import cv2
 import numpy as np
 import torch
 
-from infer_track_3d import _infer_tracks, _resolve_device, _resize_video, _unwrap_state_dict
-from src.core import build_logger, load_checkpoint, load_yaml_config, seed_everything
+from infer_track_3d import _infer_tracks, _resolve_device, _resize_video
+from src.core import (
+    build_inference_model_from_checkpoint,
+    build_logger,
+    configure_cpu_thread_limits,
+    load_yaml_config,
+    reset_peak_memory,
+    resource_snapshot,
+    seed_everything,
+)
 from src.model import build_model
 
 
@@ -123,6 +132,13 @@ def parse_args() -> argparse.Namespace:
         help="Frames per sequence to evaluate. Default is a large cap, so full WorldTrack cases are used.",
     )
     parser.add_argument("--query-chunk-size", type=int, default=4096)
+    parser.add_argument("--precision", default="fp32", choices=("auto", "fp32", "fp16"))
+    parser.add_argument(
+        "--max-gpu-memory-gib",
+        type=float,
+        default=0.0,
+        help="Optional PyTorch allocator cap in GiB; 0 disables the cap.",
+    )
     parser.add_argument("--limit-seqs", type=int, default=0, help="Optional cap per subset. <=0 disables.")
     parser.add_argument("--save-per-sequence", action="store_true", help="Write per-sequence metric JSON files.")
     return parser.parse_args()
@@ -431,8 +447,32 @@ def _format_subset_summary(subset: str, summary: dict[str, Any]) -> str:
     )
 
 
+def _json_sanitize(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {str(key): _json_sanitize(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_json_sanitize(item) for item in value]
+    if isinstance(value, tuple):
+        return [_json_sanitize(item) for item in value]
+    if isinstance(value, np.ndarray):
+        return _json_sanitize(value.tolist())
+    if isinstance(value, np.generic):
+        return _json_sanitize(value.item())
+    if isinstance(value, float):
+        return value if np.isfinite(value) else None
+    return value
+
+
+def _write_standard_json(path: Path, payload: Any) -> None:
+    path.write_text(
+        json.dumps(_json_sanitize(payload), ensure_ascii=False, indent=2, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+
+
 def main() -> int:
     args = parse_args()
+    configure_cpu_thread_limits()
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     logger = build_logger("eval_track3d_in_worldtrack", output_dir)
@@ -444,16 +484,22 @@ def main() -> int:
     if not ckpt_path.exists():
         raise FileNotFoundError(f"Checkpoint not found: {ckpt_path}")
 
-    model = build_model(cfg["model"]).eval()
-    payload = load_checkpoint(ckpt_path, map_location="cpu")
-    state_dict = _unwrap_state_dict(payload)
-    if not state_dict:
-        raise RuntimeError(f"No model weights found in checkpoint: {ckpt_path}")
-    load_result = model.load_state_dict(state_dict, strict=False)
-    logger.info("Loaded checkpoint %s", ckpt_path)
-    logger.info("Missing keys: %d  Unexpected keys: %d", len(load_result.missing_keys), len(load_result.unexpected_keys))
     device = _resolve_device(args.device)
-    model.to(device).eval()
+    model, runtime, load_result = build_inference_model_from_checkpoint(
+        lambda: build_model(cfg["model"]),
+        checkpoint_path=ckpt_path,
+        device=device,
+        precision=args.precision,
+        max_gpu_memory_gib=args.max_gpu_memory_gib,
+    )
+    logger.info("Loaded checkpoint %s through mmap/meta assignment", ckpt_path)
+    logger.info("Missing keys: %d  Unexpected keys: %d", len(load_result.missing_keys), len(load_result.unexpected_keys))
+    logger.info(
+        "Inference runtime: device=%s precision=%s max_gpu_memory_gib=%s",
+        runtime.device,
+        runtime.precision,
+        runtime.max_gpu_memory_gib,
+    )
 
     data_root = Path(args.data_root)
     if not data_root.exists():
@@ -472,6 +518,8 @@ def main() -> int:
             "subsets": subsets,
             "num_frames": int(args.num_frames),
             "query_chunk_size": int(args.query_chunk_size),
+            "precision": runtime.precision,
+            "max_gpu_memory_gib": runtime.max_gpu_memory_gib,
         },
         "subsets": {},
     }
@@ -494,6 +542,8 @@ def main() -> int:
         subset_out_dir.mkdir(parents=True, exist_ok=True)
 
         for seq_path in seq_paths:
+            reset_peak_memory(device)
+            sequence_start = time.perf_counter()
             sample = load_worldtrack_sequence(seq_path, num_frames=int(args.num_frames))
             video_rgb = sample["video_rgb"]
             original_h = int(video_rgb.shape[1])
@@ -541,6 +591,12 @@ def main() -> int:
                     "clip_frames": int(pred_payload["clip_frames"]),
                     "model_image_size": [int(model_h), int(model_w)],
                     "original_image_size": [int(original_h), int(original_w)],
+                    "runtime": {
+                        "precision": runtime.precision,
+                        "max_gpu_memory_gib": runtime.max_gpu_memory_gib,
+                        "elapsed_seconds": time.perf_counter() - sequence_start,
+                        **resource_snapshot(device),
+                    },
                 }
             )
             stitch_diagnostics = pred_payload.get("stitch_diagnostics", {})
@@ -580,17 +636,17 @@ def main() -> int:
             )
             if bool(args.save_per_sequence):
                 per_seq_path = subset_out_dir / f"{sample['video_name']}.json"
-                per_seq_path.write_text(json.dumps(metrics, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+                _write_standard_json(per_seq_path, metrics)
 
         subset_summary = _aggregate_results(subset_results)
         subset_summary["sequences"] = subset_results
         all_summary["subsets"][subset] = subset_summary
         subset_summary_path = subset_out_dir / "summary.json"
-        subset_summary_path.write_text(json.dumps(subset_summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        _write_standard_json(subset_summary_path, subset_summary)
         logger.info(_format_subset_summary(subset, subset_summary))
 
     overall_path = output_dir / "summary.json"
-    overall_path.write_text(json.dumps(all_summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    _write_standard_json(overall_path, all_summary)
 
     lines = ["WorldTrack D4RT Summary"]
     for subset in subsets:

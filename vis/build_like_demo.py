@@ -35,6 +35,7 @@ from infer_track_3d import (
     _unwrap_state_dict,
     _estimate_overlap_sim3,
 )
+from src.core.inference_runtime import inference_context
 from src.eval.tasks import _estimate_intrinsics_params_from_predictions, _run_model_for_queries, _solve_scale_only, _umeyama_rigid
 
 
@@ -846,7 +847,7 @@ def _infer_point_cloud_ref0(
     points_conf = np.full((num_frames, num_points), np.nan, dtype=np.float32)
     chunk_transforms: list[tuple[int, int, float, np.ndarray, np.ndarray]] = []
 
-    with torch.no_grad():
+    with inference_context(model):
         if num_frames <= clip_frames or not bool(umeyama_slide_window):
             clip_groups: dict[tuple[int, ...], list[tuple[int, int]]] = {}
             for frame_idx in range(num_frames):
@@ -1076,7 +1077,7 @@ def _predict_camera_branches(
     pose_valid = np.zeros((num_frames,), dtype=np.bool_)
     pose_valid[0] = True
 
-    with torch.no_grad():
+    with inference_context(model):
         if num_frames <= clip_frames or not (bool(umeyama_slide_window) or bool(umeyama_slide_window_dense)):
             clip_groups: dict[tuple[int, ...], list[tuple[int, int]]] = {}
             for frame_idx in range(num_frames):
@@ -1237,7 +1238,7 @@ def _predict_camera_branches(
 
 
 def _export_video_from_frames(*, video_rgb: np.ndarray, fps: float, dst_video: Path) -> tuple[str, str]:
-    poster_name = "video_poster.jpg"
+    poster_name = f"{dst_video.stem}_poster.jpg"
     poster_path = dst_video.parent / poster_name
     import cv2
 

@@ -1,341 +1,189 @@
-<div align="center">
-  <h1>OpenD4RT</h1>
-  <h3>An unofficial PyTorch/GPU implementation of D4RT for 4D reconstruction and tracking</h3>
-  <p>
-    <strong>RHOS Team</strong> · <a href="https://mvig-rhos.com/" target="_blank">https://mvig-rhos.com/</a>
-  </p>
-  <p>
-    <a href="https://d4rt-paper.github.io/" target="_blank">
-      <img src="https://img.shields.io/badge/%F0%9F%8C%90-D4RT%20Project-2f80ed" alt="D4RT project page">
-    </a>
-    <a href="https://huggingface.co/Lijiaxin0111/OpenD4RT/tree/main/checkpoints" target="_blank">
-      <img src="https://img.shields.io/badge/%F0%9F%A4%97-Checkpoints-yellow" alt="Hugging Face checkpoints">
-    </a>
-    <a href="LICENSE">
-      <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
-    </a>
-    <img src="https://img.shields.io/badge/python-3.10-blue.svg" alt="Python">
-    <img src="https://img.shields.io/badge/PyTorch-2.6-red.svg" alt="PyTorch">
-  </p>
-  <p><strong>OpenD4RT reproduces D4RT-style 4D reconstruction and tracking with released WorldTrack evaluation, visualization tools, and Hugging Face checkpoints.</strong></p>
-</div>
+# OpenD4RT WorldTrack Inference and Analysis
 
-OpenD4RT is an unofficial open-source PyTorch/GPU implementation of D4RT,
-developed to reproduce the model architecture, training recipe, evaluation
-protocols, and implementation details described in the D4RT paper and
-appendix. The current public repo includes the released Hugging Face
-checkpoint, the model, WorldTrack evaluation, and Viser visualization
-tools, with complete training and evaluation code planned for release.
+English | [简体中文](README_zh-CN.md)
 
-<p align="center">
-  <img src="docs/image.png" width="950" alt="D4RT overview">
-</p>
+This fork keeps the original OpenD4RT codebase and adds a small, public set of
+WorldTrack inference, evaluation, visualization, and analysis utilities. The
+goal is to make the inference behavior easy to inspect: run OpenD4RT on
+WorldTrack, compare a 32-frame clip with a 64-frame anchor-clip sequence, and
+visualize the coordinate-frame meaning of the D4RT `t_cam` query argument.
 
-## 🔥 News
+This is not a full reproduction of the D4RT paper. I did not train a model, did
+not change the released checkpoint, and did not run a large hyperparameter
+sweep.
 
-- [2026/06/04] Released the full OpenD4RT training code.
-- [2025/05/20] Released the `48CLIP_9Mix_NoCropAUG` checkpoint.
-- [2026/05/02] Released the OpenD4RT WorldTrack evaluation pipeline, Viser
-  visualization tools, and the first Hugging Face checkpoint.
+## Upstream Project
 
-## 🧠 What is D4RT?
+OpenD4RT provides code for dense 4D reconstruction and tracking from video. The
+released checkpoint used here is `OpenD4RT_32CLIP_9Dataset_NoAUG`, whose model
+clip length is 32 frames.
 
-D4RT is a feedforward video model for reconstructing and tracking dynamic
-scenes. It uses a unified transformer architecture to infer depth,
-spatio-temporal correspondence, and camera parameters from a single video. Its
-query interface probes the 3D position of a source pixel `(u, v, t_src)` at a
-target timestep `t_tgt` in a selected camera coordinate frame `t_cam`, enabling
-sparse tracking, all-pixel tracking, and 4D scene reconstruction through the
-same model interface.
+Please see the original project and paper for the method, training setup, and
+full benchmark context:
 
-See [docs/D4RT_paper.pdf](docs/D4RT_paper.pdf) for the local paper PDF
-included in this repository.
+- Original repository: https://github.com/Lijiaxin0111/Open-d4rt
+- Project page: https://d4rt-paper.github.io/
+- Paper: https://arxiv.org/abs/2504.13152
 
-## 🔧 Installation
+## What I Added in This Fork
 
-Create the conda environment:
+Upstream OpenD4RT provides the model architecture, released checkpoint, and core
+query interface. This fork adds:
 
-```bash
-conda env create -f environment.yml
-conda activate d4rt
-```
+- FP16 inference settings and memory-aware query chunking.
+- WorldTrack evaluation entry points for APD/EPE style 3D tracking metrics.
+- A WorldTrack demo builder that exports input video, 2D overlays, 3D tracks,
+  metadata, and runtime summaries.
+- A compact public artifact builder:
+  `scripts/build_public_artifacts.py`.
+- A `t_cam` query semantics analysis comparing the same query points with
+  `t_cam=t_tgt` and `t_cam=0`.
+- A 32-frame vs 64-frame inference case study on the same `juggle_5` sequence.
 
-Or install into an existing Python environment:
+The 64-frame case uses the same 32-clip checkpoint and anchor-clip inference.
+It does not increase the model context from 32 to 64 frames.
 
-```bash
-pip install -r requirements.txt
-```
+![OpenD4RT WorldTrack demo overview](artifacts/opend4rt_demo_overview.png)
 
-The visualization package builder calls the `ffmpeg` command-line tool to
-write MP4 assets for Viser. The conda environment includes `ffmpeg`; if you use
-`pip install -r requirements.txt`, install `ffmpeg` separately if needed.
+Overview of the selected WorldTrack demo: input frame, 2D GT/pred overlay, 3D GT
+tracks, and 3D predicted tracks.
 
-## 📦 Checkpoint Zoo
+![D4RT t_cam query semantics](artifacts/t_cam_query_semantics.png)
 
-| Variant | Data | Aug. | Frames | Status | Download |
-| --- | --- | --- | ---: | --- | --- |
-| `32CLIP_9Dataset_NoAUG` | 9Mix |  color aug + No crop aug | 32 | Released | [HF](https://huggingface.co/Lijiaxin0111/OpenD4RT/tree/main/checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG) |
-| `48CLIP_9Mix_NoCropAUG` | 9Mix | color aug + No crop aug  | 48 | Released | [HF](https://huggingface.co/Lijiaxin0111/OpenD4RT/tree/main/checkpoints/OpenD4RT_48CLIP_9Mix_NoCropAUG) |
-| `48CLIP_9Mix_AUG` | 9Mix | color aug + crop aug | 48 | Coming | TBD |
-| `32CLIP_10Mix_SynthVerse_NoAUG` | 10Mix | color aug + No crop aug | 32 | Coming | TBD |
-| `48CLIP_10Mix_SynthVerse_AUG` | 10Mix |  color aug + crop aug | 48 | Coming | TBD |
+`t_cam` coordinate-frame semantics: the same query points are visualized in
+current-camera coordinates and fixed-reference coordinates. This is not an
+accuracy comparison.
 
-Released checkpoint local path:
-`checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/opend4rt.ckpt`.
+![32-frame vs 64-frame inference comparison](artifacts/frame_count_comparison.png)
 
-Additional released checkpoint local path:
-`checkpoints/OpenD4RT_48CLIP_9Mix_NoCropAUG/opend4rt.ckpt`.
+Lightweight case study comparing 32-frame inference with 64-frame anchor-clip
+inference using the same released 32-clip checkpoint.
 
-Tip: all rows are OpenD4RT variants. The 9Mix setting uses PointOdyssey,
-Dynamic Replica, Kubric Full,
-TartanAir, Virtual KITTI 2, ScanNet, BlendedMVS, CO3D, and MVS-Synth. The
-10Mix setting additionally includes SynthVerse.
+## Public Artifacts
 
-## ⬇️ Checkpoint Download
+This repository publicly includes the following result files:
 
-Download the released checkpoint and model config from
-[Lijiaxin0111/OpenD4RT](https://huggingface.co/Lijiaxin0111/OpenD4RT/tree/main/checkpoints)
-into the default path used by the scripts:
+| File | Purpose |
+| --- | --- |
+| `artifacts/opend4rt_demo_overview.png` | Input frame, 2D GT/pred overlay, 3D GT tracks, and 3D predicted tracks. |
+| `artifacts/t_cam_query_semantics.png` | Same selected query points shown under current-camera and fixed-reference query semantics. |
+| `artifacts/frame_count_comparison.png` | APD, EPE, dynamic APD/EPE, and runtime comparison for 32 vs 64 frames. |
+| `artifacts/worldtrack_evaluation_summary.json` | Full WorldTrack mini evaluation summary with strict JSON `null` values instead of bare `NaN`. |
+| `artifacts/t_cam_query_semantics.json` | Selected query points, visibility, motion scores, runtime, and predicted trajectories. |
+| `artifacts/frame_count_comparison.json` | Machine-readable quality/runtime comparison for the two `juggle_5` runs. |
 
-```bash
-pip install -U huggingface_hub
+Not included: datasets, checkpoint weights, virtual environments, temporary
+logs, and full demo video packages.
 
-huggingface-cli download Lijiaxin0111/OpenD4RT \
-  --repo-type model \
-  --include "checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/opend4rt.ckpt" \
-  --include "checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/model.yaml" \
-  --include "checkpoints/OpenD4RT_48CLIP_9Mix_NoCropAUG/opend4rt.ckpt" \
-  --include "checkpoints/OpenD4RT_48CLIP_9Mix_NoCropAUG/model.yaml" \
-  --local-dir .
-```
+## Result Summary
 
-Expected local files:
+WorldTrack mini evaluation with the released 32-clip checkpoint:
+
+| Subset | APD global | EPE global | Dynamic APD | Dynamic EPE | Queries |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `adt_mini` | 0.6992 | 0.2965 | 0.6975 | 0.3629 | 22,187 |
+| `po_mini` | 0.6600 | 0.3405 | 0.7329 | 0.2734 | 53,468 |
+| `pstudio_mini` | 0.7861 | 0.1813 | 0.7861 | 0.1813 | 8,720 |
+| `ds_mini` | 0.7266 | 0.2945 | 0.7519 | 0.2701 | 52,462 |
+
+Same `pstudio_mini/juggle_5.npz` sample:
+
+| Case | APD | EPE | Dynamic APD | Dynamic EPE | Valid queries | Runtime |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 32 frames | 0.9916 | 0.0533 | 0.9916 | 0.0533 | 256 | 65.1s |
+| 64 frames, anchor-clip | 0.9554 | 0.0693 | 0.9554 | 0.0693 | 256 | 148.3s |
+
+On this selected sequence, extending the temporal range through anchor-clip
+inference increased runtime and produced slightly lower tracking quality. This
+single-sequence comparison should not be interpreted as a general benchmark
+conclusion.
+
+## Setup
+
+Install the project dependencies following the upstream instructions, then place
+the released checkpoint files at:
 
 ```text
-checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/
-  opend4rt.ckpt
-  model.yaml
-checkpoints/OpenD4RT_48CLIP_9Mix_NoCropAUG/
-  opend4rt.ckpt
-  model.yaml
+checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/model.yaml
+checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG/opend4rt.ckpt
 ```
 
-## 🌍 WorldTrack Data
-
-Download the WorldTrack release from:
-
-```text
-https://drive.google.com/drive/folders/1-JW88ru30irMYyFab_4YBQbGbd9tKpXV
-```
-
-Place the `.npz` files under:
+Place WorldTrack data under:
 
 ```text
 data/worldtrack_release/
-  adt_mini/*.npz
-  po_mini/*.npz
-  pstudio_mini/*.npz
-  ds_mini/*.npz
 ```
 
-## 🏋️ Training
+Only lightweight config files are tracked in this repository. The checkpoint
+weights and dataset files must be provided separately.
 
-The main reproduction entrypoint for the 48-frame 9Mix run is:
+## Run Evaluation
 
-```bash
-VIDEOMAE2_CKPT=/path/to/vit_g_hybrid_pt_1200e.pth \
-bash scripts/train_worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_8gpu.sh
-```
-
-This script launches `torchrun`, loads the reproduction configs under
-`configs/`, initializes from the released 32-frame checkpoint, and runs
-the 48-frame training recipe used for the WorldTrack setting.
-
-For a quick preflight without starting training:
+Example full mini evaluation:
 
 ```bash
-DRY_RUN=1 \
-VIDEOMAE2_CKPT=/path/to/vit_g_hybrid_pt_1200e.pth \
-bash scripts/train_worldtrack_sota_ninemix_clip48_a_query_local_lr4e-6_8gpu.sh
-```
-
-Full training setup, required checkpoints, dataset root overrides, and smoke
-test commands are documented in [docs/training.md](docs/training.md).
-
-## 📊 Evaluation
-
-Run a quick smoke test on one `adt_mini` sequence:
-
-```bash
-LIMIT_SEQS=1 SUBSETS=adt_mini OUTPUT_DIR=tmp/eval_smoke bash run_eval_worldtrack.sh
-```
-
-Run the full WorldTrack evaluation:
-
-```bash
+EXP=worldtrack_mini \
+PRECISION=fp16 \
+NUM_FRAMES=64 \
+QUERY_CHUNK_SIZE=512 \
+MAX_GPU_MEMORY_GIB=20 \
 bash run_eval_worldtrack.sh
 ```
 
-Equivalent explicit command:
+The evaluation writes a summary JSON under the configured output directory.
 
-```bash
-EXP=checkpoints/OpenD4RT_32CLIP_9Dataset_NoAUG
+## Build Demo Packages
 
-python eval_track3d_in_worldtrack.py \
-  --model-config "$EXP/model.yaml" \
-  --ckpt-path "$EXP/opend4rt.ckpt" \
-  --data-root data/worldtrack_release \
-  --subsets adt_mini,po_mini,pstudio_mini,ds_mini \
-  --num-frames 64 \
-  --query-chunk-size 4096 \
-  --output-dir tmp/eval_worldtrack \
-  --device cuda \
-  --save-per-sequence
-```
-
-Useful overrides:
-
-```bash
-QUERY_CHUNK_SIZE=1024 bash run_eval_worldtrack.sh
-CUDA_VISIBLE_DEVICES=1 DEVICE=cuda bash run_eval_worldtrack.sh
-SUBSETS=adt_mini LIMIT_SEQS=1 NUM_FRAMES=64 bash run_eval_worldtrack.sh
-```
-
-## 🏆 Results
-
-OpenD4RT_32CLIP_9Dataset_NoAUG detailed WorldTrack results:
-
-| Subset | APD global | EPE global | APD global dyn | EPE global dyn | Queries |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| `adt_mini` | 0.6993 | 0.2964 | 0.6975 | 0.3628 | 22187 |
-| `po_mini` | 0.6603 | 0.3397 | 0.7333 | 0.2722 | 53468 |
-| `pstudio_mini` | 0.7863 | 0.1811 | 0.7863 | 0.1811 | 8720 |
-| `ds_mini` | 0.7266 | 0.2944 | 0.7521 | 0.2699 | 52462 |
-
-OpenD4RT_48CLIP_9Mix_NoCropAUG detailed WorldTrack results
-(`step_0006000`, `anchor_clip`, evaluated with 64 frames):
-
-| Subset | APD global | EPE global | APD global dyn | EPE global dyn | Queries |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| `adt_mini` | 0.7220 | 0.2758 | 0.7325 | 0.3199 | 22187 |
-| `po_mini` | 0.6799 | 0.3178 | 0.7425 | 0.2593 | 53468 |
-| `pstudio_mini` | 0.7960 | 0.1753 | 0.7960 | 0.1753 | 8720 |
-| `ds_mini` | 0.7248 | 0.2959 | 0.7488 | 0.2755 | 52462 |
-
-## 📈 Model Results
-
-Sparse point tracking comparison on WorldTrack-style subsets. APD is shown as
-a percentage, higher APD is better, and lower EPE is better. Recent baseline
-numbers are transcribed from the sparse point tracking table in the provided
-reference image. OpenD4RT uses this repository's evaluation results, with
-`ds_mini` reported in the DR column.
-
-<table>
-  <thead>
-    <tr>
-      <th rowspan="2" align="left">Model</th>
-      <th colspan="2" align="center">PStudio</th>
-      <th colspan="2" align="center">PO</th>
-      <th colspan="2" align="center">DR</th>
-      <th colspan="2" align="center">ADT</th>
-    </tr>
-    <tr>
-      <th align="right">APD&nbsp;↑</th><th align="right">EPE&nbsp;↓</th>
-      <th align="right">APD&nbsp;↑</th><th align="right">EPE&nbsp;↓</th>
-      <th align="right">APD&nbsp;↑</th><th align="right">EPE&nbsp;↓</th>
-      <th align="right">APD&nbsp;↑</th><th align="right">EPE&nbsp;↓</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td><b>SpaTrackerV2</b> (2025)</td><td align="right">74.16</td><td align="right">0.2272</td><td align="right">69.57</td><td align="right">0.3780</td><td align="right">73.43</td><td align="right">0.2732</td><td align="right">92.22</td><td align="right">0.0915</td></tr>
-    <tr><td><b>St4RTrack</b> (2025)</td><td align="right">69.67</td><td align="right">0.2637</td><td align="right">67.95</td><td align="right">0.3140</td><td align="right">73.74</td><td align="right">0.2682</td><td align="right">76.01</td><td align="right">0.2680</td></tr>
-    <tr><td><b>TraceAnything</b> (2025)</td><td align="right">71.33</td><td align="right">0.2727</td><td align="right">39.83</td><td align="right">1.0593</td><td align="right">60.63</td><td align="right">0.5758</td><td align="right">75.65</td><td align="right">0.2511</td></tr>
-    <tr><td><b>Any4D</b> (2025)</td><td align="right">60.03</td><td align="right">0.3344</td><td align="right">60.86</td><td align="right">0.4194</td><td align="right">68.39</td><td align="right">0.3012</td><td align="right">56.71</td><td align="right">0.4320</td></tr>
-    <tr><td><b>V-DPM</b> (2026)</td><td align="right">76.36</td><td align="right">0.1957</td><td align="right">79.79</td><td align="right">0.1994</td><td align="right">76.38</td><td align="right">0.2378</td><td align="right">66.06</td><td align="right">0.3426</td></tr>
-    <tr><td><b>4RC</b>(2026)</td><td align="right">69.04</td><td align="right">0.2603</td><td align="right">80.27</td><td align="right">0.2681</td><td align="right">82.91</td><td align="right">0.1889</td><td align="right">84.28</td><td align="right">0.1766</td></tr>
-    <tr>
-      <td><b>OpenD4RT 32CLIP (Ours)</b></td>
-      <td align="right"><b>78.63</b></td>
-      <td align="right"><b>0.1811</b></td>
-      <td align="right"><b>66.03</b></td><td align="right"><b>0.3397</b></td>
-      <td align="right"><b>72.66</b></td><td align="right"><b>0.2944</b></td>
-      <td align="right"><b>69.93</b></td><td align="right"><b>0.2964</b></td>
-    </tr>
-    <tr>
-      <td><b>OpenD4RT 48CLIP (Ours)</b></td>
-      <td align="right"><b>79.60</b></td>
-      <td align="right"><b>0.1753</b></td>
-      <td align="right"><b>67.99</b></td><td align="right"><b>0.3178</b></td>
-      <td align="right"><b>72.48</b></td><td align="right"><b>0.2959</b></td>
-      <td align="right"><b>72.20</b></td><td align="right"><b>0.2758</b></td>
-    </tr>
-  </tbody>
-</table>
-
-Tip: OpenD4RT has the strongest PStudio result in this comparison.
-
-## 🎬 Result Gallery
-
-| Case / Motion | RGB + 2D Tracking | GT vs Pred 3D Tracks |
-| --- | --- | --- |
-| `softball_25`<br>Softball swing and fast ball motion | <img src="demo/softball_25_rgb_gt_pred_2d.gif" width="360" alt="Softball RGB video with GT and OpenD4RT 2D tracking overlay"> | <img src="demo/softball_25_gt_pred_3d.gif" width="360" alt="Softball GT and OpenD4RT 3D track comparison"> |
-| `football_16`<br>Football play with player and ball motion | <img src="demo/football_16_rgb_gt_pred_2d.gif" width="360" alt="Football RGB video with GT and OpenD4RT 2D tracking overlay"> | <img src="demo/football_16_gt_pred_3d.gif" width="360" alt="Football GT and OpenD4RT 3D track comparison"> |
-
-## 👁️ Viser Demo Visualization
-
-Build two example Viser demo packages. Each package uses the first 64 frames:
-
-```bash
-DEMO_CASE=pstudio_mini/juggle_5.npz OUTPUT_DIR=tmp/worldtrack_demo_juggle bash run_build_worldtrack_demo.sh
-DEMO_CASE=pstudio_mini/softball_25.npz OUTPUT_DIR=tmp/worldtrack_demo_softball bash run_build_worldtrack_demo.sh
-```
-
-Open a demo package with Viser:
-
-```bash
-python vis/serve_demo_viser.py --root tmp/worldtrack_demo_juggle --port 8081
-```
-
-For a lighter/faster package:
+Generate the 64-frame demo package:
 
 ```bash
 DEMO_CASE=pstudio_mini/juggle_5.npz \
-OUTPUT_DIR=tmp/worldtrack_demo_small \
-POINT_GRID_COLS=32 POINT_GRID_ROWS=32 POINT_MAX_POINTS=1024 TRACK_MAX_POINTS=96 \
+OUTPUT_DIR=tmp/worldtrack_demo_64f \
+PRECISION=fp16 \
+NUM_FRAMES=64 \
+QUERY_CHUNK_SIZE=512 \
+MAX_GPU_MEMORY_GIB=20 \
 bash run_build_worldtrack_demo.sh
 ```
 
-The generated demo package contains `assets/demo_data.json`,
-`assets/input_video.mp4`, rendered diagnostic videos, and `manifest.json`.
+Generate the 32-frame comparison package:
 
-## ✅ ToDo
+```bash
+DEMO_CASE=pstudio_mini/juggle_5.npz \
+OUTPUT_DIR=tmp/worldtrack_demo_32f \
+PRECISION=fp16 \
+NUM_FRAMES=32 \
+QUERY_CHUNK_SIZE=512 \
+MAX_GPU_MEMORY_GIB=20 \
+bash run_build_worldtrack_demo.sh
+```
 
-- [x] Release the OpenD4RT model runtime for the 32-frame 9-dataset checkpoint.
-- [x] Release WorldTrack evaluation scripts and archived metrics.
-- [x] Release Viser-based qualitative visualization tools.
-- [x] Release complete training code.
-- [ ] Release additional checkpoints listed in the Checkpoint Zoo.
-- [ ] Release SynthVerse evaluation results.
-- [ ] Release full evaluation code for the benchmarks reported in the D4RT
-  paper and appendix.
+## Build Public Artifacts
 
-## 📄 License
+After the two demo packages exist, regenerate the small PNG/JSON files:
 
-OpenD4RT is an unofficial implementation and is not affiliated with or endorsed
-by the original D4RT authors. The code in this repository is released under the
-Apache 2.0 license; see [LICENSE](LICENSE). The D4RT paper, project page,
-datasets, third-party assets, and upstream dependencies remain under their
-respective licenses and terms.
+```bash
+python scripts/build_public_artifacts.py \
+  --summary-json artifacts/worldtrack_evaluation_summary.json \
+  --demo-64-dir tmp/worldtrack_demo_64f \
+  --demo-32-dir tmp/worldtrack_demo_32f \
+  --device cuda \
+  --precision fp16 \
+  --max-gpu-memory-gib 20 \
+  --num-frames 64 \
+  --query-chunk-size 512
+```
 
-## 🙏 Acknowledgements
+## Scope and Limitations
 
-This project is built upon the D4RT paper and official project materials. We
-thank the original D4RT authors for introducing the D4RT formulation, releasing
-the project page, and documenting the paper and appendix details that this
-implementation follows. We also acknowledge the contributors and resources
-credited on the official D4RT website, including colleagues who supported
-project advice, manuscript feedback, early development, code review,
-visualization, baseline comparisons, and data generation. We also thank the
-splat viewer authors for the WebGL renderer used by the official D4RT
-visualization pipeline. Please refer to the official D4RT project page for the
-full original acknowledgements.
+- This repository focuses on inference engineering, evaluation, and analysis
+  using the released `OpenD4RT_32CLIP_9Dataset_NoAUG` checkpoint; no model
+  training or fine-tuning was performed.
+- The 32/64-frame comparison is a lightweight case study on one WorldTrack
+  sequence. Both settings use the same 32-clip checkpoint, with the 64-frame
+  sequence handled through anchor-clip inference.
+
+## License
+
+This fork keeps the upstream Apache-2.0 license. Please cite the original D4RT
+paper/project when using the method or released model.

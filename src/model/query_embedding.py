@@ -21,6 +21,10 @@ class FourierFeatures(nn.Module):
             persistent=False,
         )
 
+    def reset_nonpersistent_buffers(self, *, device: torch.device) -> None:
+        """Recreate deterministic buffers absent from serialized state dicts."""
+        self.frequencies = 2.0 ** torch.arange(self.num_bands, dtype=torch.float32, device=device) * torch.pi
+
     @property
     def output_dim(self) -> int:
         base = self.input_dim if self.include_input else 0
@@ -140,4 +144,3 @@ class QueryEmbedder(nn.Module):
             token = token + self.patch_proj(patches)
 
         return self.out_norm(token)
-

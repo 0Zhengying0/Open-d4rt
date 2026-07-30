@@ -1,0 +1,80 @@
+{
+  "description": "Frame-count quality comparison on the same WorldTrack juggle_5 case.",
+  "important_note": "Uses the same 32-clip checkpoint. The 32-frame case fits in one model clip; the 64-frame case is processed by anchor-clip inference, not by increasing model context to 64.",
+  "cases": {
+    "32_frames": {
+      "sequence": "pstudio_mini/juggle_5.npz",
+      "num_frames": 32,
+      "clip_frames": 32,
+      "checkpoint": "OpenD4RT_32CLIP_9Dataset_NoAUG",
+      "comparison_note": "Same 32-clip checkpoint; 64-frame sequences are handled by anchor-clip inference rather than a longer model context.",
+      "valid_query_count": 256,
+      "dynamic_query_count": 256,
+      "apd_global": 0.9916493331701945,
+      "epe_global": 0.053272076053584666,
+      "fractions_global": {
+        "1": 0.9665973326807782,
+        "2": 1.0,
+        "4": 1.0,
+        "8": 1.0
+      },
+      "apd_global_dynamic": 0.9916493331701945,
+      "epe_global_dynamic": 0.053272076053584666,
+      "fractions_global_dynamic": {
+        "1": 0.9665973326807782,
+        "2": 1.0,
+        "4": 1.0,
+        "8": 1.0
+      },
+      "runtime": {
+        "precision": "fp16",
+        "device": "cuda",
+        "max_gpu_memory_gib": 20.0,
+        "elapsed_seconds": 65.14715830795467,
+        "cpu_rss_gib": 2.0590438842773438,
+        "cuda_allocated_gib": 2.173208713531494,
+        "cuda_reserved_gib": 2.62890625,
+        "cuda_peak_allocated_gib": 2.6098155975341797,
+        "cuda_peak_reserved_gib": 2.62890625
+      },
+      "case": "32_frames"
+    },
+    "64_frames_anchor_clip": {
+      "sequence": "pstudio_mini/juggle_5.npz",
+      "num_frames": 64,
+      "clip_frames": 32,
+      "checkpoint": "OpenD4RT_32CLIP_9Dataset_NoAUG",
+      "comparison_note": "Same 32-clip checkpoint; 64-frame sequences are handled by anchor-clip inference rather than a longer model context.",
+      "valid_query_count": 256,
+      "dynamic_query_count": 256,
+      "apd_global": 0.95536096338407,
+      "epe_global": 0.06934089179230796,
+      "fractions_global": {
+        "1": 0.8214438535362797,
+        "2": 1.0,
+        "4": 1.0,
+        "8": 1.0
+      },
+      "apd_global_dynamic": 0.95536096338407,
+      "epe_global_dynamic": 0.06934089179230796,
+      "fractions_global_dynamic": {
+        "1": 0.8214438535362797,
+        "2": 1.0,
+        "4": 1.0,
+        "8": 1.0
+      },
+      "runtime": {
+        "precision": "fp16",
+        "device": "cuda",
+        "max_gpu_memory_gib": 20.0,
+        "elapsed_seconds": 148.2635835087858,
+        "cpu_rss_gib": 2.0646018981933594,
+        "cuda_allocated_gib": 2.173208713531494,
+        "cuda_reserved_gib": 2.74609375,
+        "cuda_peak_allocated_gib": 2.680112838745117,
+        "cuda_peak_reserved_gib": 2.74609375
+      },
+      "case": "64_frames_anchor_clip"
+    }
+  }
+}

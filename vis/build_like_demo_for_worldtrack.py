@@ -7,6 +7,7 @@ import argparse
 import colorsys
 import json
 import os
+import time
 from pathlib import Path
 from typing import Any
 
@@ -25,8 +26,15 @@ import sys
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from infer_track_3d import _resolve_device, _resize_video, _unwrap_state_dict
-from src.core import build_logger, load_checkpoint, load_yaml_config, seed_everything
+from infer_track_3d import _resolve_device, _resize_video
+from src.core import (
+    build_inference_model_from_checkpoint,
+    build_logger,
+    configure_cpu_thread_limits,
+    load_yaml_config,
+    resource_snapshot,
+    seed_everything,
+)
 from src.model import build_model
 from vis.build_like_demo import (
     _build_uv_grid,
@@ -45,6 +53,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--worldtrack-npz", required=True, help="Path to one WorldTrack npz sample.")
     parser.add_argument("--output-dir", required=True, help="Output package directory.")
     parser.add_argument("--device", default="auto", choices=("auto", "cuda", "cpu"))
+    parser.add_argument("--precision", default="fp32", choices=("auto", "fp32", "fp16"))
+    parser.add_argument(
+        "--max-gpu-memory-gib",
+        type=float,
+        default=0.0,
+        help="Optional PyTorch allocator cap in GiB; 0 disables the cap.",
+    )
     parser.add_argument("--num-frames", type=int, default=64)
     parser.add_argument("--fps", type=float, default=15.0)
     parser.add_argument("--point-query-chunk-size", type=int, default=512)
@@ -761,6 +776,7 @@ def build_worldtrack_demo_package(
 
 def main() -> int:
     args = parse_args()
+    configure_cpu_thread_limits()
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -776,14 +792,23 @@ def main() -> int:
     if not ckpt_path.exists():
         raise FileNotFoundError(ckpt_path)
 
-    model = build_model(cfg["model"]).eval().to(device)
-    payload = load_checkpoint(ckpt_path, map_location="cpu")
-    state_dict = _unwrap_state_dict(payload)
-    if not state_dict:
-        raise RuntimeError(f"No model weights found in checkpoint: {ckpt_path}")
-    model.load_state_dict(state_dict, strict=False)
-    model.eval()
+    model, runtime, _ = build_inference_model_from_checkpoint(
+        lambda: build_model(cfg["model"]),
+        checkpoint_path=ckpt_path,
+        device=device,
+        precision=args.precision,
+        max_gpu_memory_gib=args.max_gpu_memory_gib,
+    )
+    logger = build_logger("vis_like_demo_worldtrack_runtime", output_dir)
+    logger.info(
+        "Inference runtime: device=%s precision=%s max_gpu_memory_gib=%s resources=%s",
+        runtime.device,
+        runtime.precision,
+        runtime.max_gpu_memory_gib,
+        resource_snapshot(device),
+    )
 
+    started_at = time.perf_counter()
     build_worldtrack_demo_package(
         model=model,
         cfg=cfg,
@@ -811,6 +836,17 @@ def main() -> int:
         umeyama_slide_window=bool(args.umeyama_slide_window),
         umeyama_slide_window_dense=bool(args.umeyama_slide_window_dense),
     )
+    runtime_report = {
+        "precision": runtime.precision,
+        "device": str(runtime.device),
+        "max_gpu_memory_gib": runtime.max_gpu_memory_gib,
+        "elapsed_seconds": time.perf_counter() - started_at,
+        **resource_snapshot(device),
+    }
+    (output_dir / "runtime_resources.json").write_text(
+        json.dumps(runtime_report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    logger.info("Inference resource summary: %s", runtime_report)
     return 0
 
 

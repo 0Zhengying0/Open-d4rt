@@ -10,6 +10,7 @@ import numpy as np
 import torch
 
 from src.eval.tasks import _encode_model_memory, _model_clip_frames, _run_model_for_queries, _umeyama_sim3
+from src.core.inference_runtime import inference_context
 
 
 def _resolve_device(raw: str) -> torch.device:
@@ -418,7 +419,7 @@ def _infer_tracks(
         / 255.0
     )
 
-    with torch.no_grad():
+    with inference_context(model):
         if num_frames <= clip_frames:
             pred_local, pred_ref = _run_full_clip_queries(
                 model=model,
